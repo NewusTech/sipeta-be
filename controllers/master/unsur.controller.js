@@ -59,7 +59,7 @@ module.exports = {
 
     getbyid: async (req, res) => {
         try {
-        
+
             let UnsurGet = await Unsur.findAll({
                 where: {
                     klasifikasi_id: req.params.id
@@ -153,8 +153,12 @@ module.exports = {
             res.status(200).json(response(200, 'success delete Unsur'));
 
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
+            if (err.name === 'SequelizeForeignKeyConstraintError') {
+                res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
+            } else {
+                res.status(500).json(response(500, 'Internal server error', err));
+                console.log(err);
+            }
         }
     }
 }

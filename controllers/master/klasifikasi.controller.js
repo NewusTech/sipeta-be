@@ -113,9 +113,14 @@ module.exports = {
 
             res.status(200).json(response(200, 'success delete klasifikasi'));
         } catch (err) {
-            await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
+            if (transaction) await transaction.rollback();
+
+            if (err.name === 'SequelizeForeignKeyConstraintError') {
+                res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
+            } else {
+                res.status(500).json(response(500, 'Internal server error', err));
+                console.log(err);
+            }
         }
     },
 }
