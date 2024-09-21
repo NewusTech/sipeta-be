@@ -1,9 +1,19 @@
-# sipeta-be
+# Sipeta-BE
 
 ## Cara Menjalankan Aplikasi
 
 Untuk menjalankan aplikasi, ikuti langkah-langkah berikut:
 
+-> **Fast Running**
+    ```bash
+    npm install
+    npx sequelize-cli db:migrate:undo:all
+    npx sequelize-cli db:migrate
+    npx sequelize-cli db:seed:all
+    npm start
+    ```
+
+-> Detail
 1. **Install dependencies**:
     ```bash
     npm install
