@@ -24,6 +24,24 @@ const getKeyFromUrl = (url) => {
 
 module.exports = {
 
+    getfototoponim: async (req, res) => {
+        try {
+          const { datatoponim_id } = req.params;
+    
+          const fotoToponim = await Fototoponim.findAll({
+            where: { datatoponim_id: datatoponim_id }
+          });
+    
+          if (!fotoToponim) {
+            return res.status(404).json(response(404, 'Detailtoponim not found'));
+          }
+    
+          res.status(200).json(response(200, 'Detailtoponim found', fotoToponim));
+        } catch (err) {
+          res.status(500).json(response(500, 'Internal server error', err));
+        }
+      },
+
     createFototoponim: async (req, res) => {
         const transaction = await sequelize.transaction(); // Memulai transaksi
         try {

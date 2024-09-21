@@ -5,6 +5,12 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Datatoponim extends Model {
     static associate(models) {
+      Datatoponim.hasMany(models.Detailtoponim, {
+        foreignKey: 'datatoponim_id',
+      });
+      Datatoponim.hasMany(models.Fototoponim, {
+        foreignKey: 'datatoponim_id',
+      });
       Datatoponim.belongsTo(models.Kecamatan, {
         foreignKey: 'kecamatan_id',
       });
@@ -21,7 +27,9 @@ module.exports = (sequelize, DataTypes) => {
   }
   Datatoponim.init({
     id_toponim: DataTypes.STRING,
-    nama_tempat: DataTypes.STRING,
+    nama_lokal: DataTypes.STRING,
+    nama_spesifik: DataTypes.STRING,
+    nama_peta: DataTypes.STRING,
     tipe_geometri: DataTypes.INTEGER,
     klasifikasi_id: DataTypes.INTEGER,
     unsur_id: DataTypes.INTEGER,

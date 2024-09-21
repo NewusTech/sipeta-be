@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
       // Association dengan Datatoponim
       Detailtoponim.belongsTo(models.Datatoponim, {
         foreignKey: 'datatoponim_id',
-        as: 'datatoponim' // Optional, untuk memberi alias
       });
     }
   }
@@ -17,7 +16,6 @@ module.exports = (sequelize, DataTypes) => {
     zona_utm: DataTypes.STRING,
     nlp: DataTypes.STRING,
     lcode: DataTypes.STRING,
-    nama_peta: DataTypes.STRING,
     nama_gazeter: DataTypes.STRING,
     nama_lain: DataTypes.STRING,
     asal_bahasa: DataTypes.STRING,

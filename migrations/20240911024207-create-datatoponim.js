@@ -12,7 +12,13 @@ module.exports = {
       id_toponim: {
         type: Sequelize.STRING,
       },
-      nama_tempat: {
+      nama_lokal: {
+        type: Sequelize.STRING,
+      },
+      nama_spesifik: {
+        type: Sequelize.STRING,
+      },
+      nama_peta: {
         type: Sequelize.STRING,
       },
       tipe_geometri: {

@@ -21,9 +21,6 @@ module.exports = {
       lcode: {
         type: Sequelize.STRING,
       },
-      nama_peta: {
-        type: Sequelize.STRING,
-      },
       nama_gazeter: {
         type: Sequelize.STRING,
       },

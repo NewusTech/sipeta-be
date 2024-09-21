@@ -10,7 +10,6 @@ const schema = {
     zona_utm: { type: "string", optional: true },
     nlp: { type: "string", optional: true },
     lcode: { type: "string", optional: true },
-    nama_peta: { type: "string", optional: true },
     nama_gazeter: { type: "string", optional: true },
     nama_lain: { type: "string", optional: true },
     asal_bahasa: { type: "string", optional: true },
