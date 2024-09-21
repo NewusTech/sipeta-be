@@ -4,6 +4,7 @@
 
 Untuk menjalankan aplikasi, ikuti langkah-langkah berikut:
 
+0. Simple running 
     ```bash
     npm install
     ```
