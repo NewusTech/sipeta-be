@@ -1,15 +1,45 @@
 const { response } = require('../../helpers/response.formatter');
 
-const { Desa } = require('../../models');
+const { Desa, sequelize } = require('../../models');
 const { generatePagination } = require('../../pagination/pagination');
 const Validator = require("fastest-validator");
 const v = new Validator();
 const { Op } = require('sequelize');
 
+const schema = {
+    name: { type: "string", optional: true },
+    alamat: { type: "string", optional: true },
+    kepala: { type: "string", optional: true },
+    telp: { type: "string", optional: true },
+    kecamatan_id: { type: "string", convert: true, optional: true }
+};
+
 module.exports = {
 
-    //mendapatkan semua data desa
-    getdesa: async (req, res) => {
+    create: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        try {
+            let desaCreateObj = req.body;
+
+            const validate = v.validate(desaCreateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            let desaCreate = await Desa.create(desaCreateObj);
+
+            await transaction.commit();
+
+            res.status(201).json(response(201, 'success create desa', desaCreate));
+        } catch (err) {
+            await transaction.rollback();
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    get: async (req, res) => {
         try {
             let desaGets;
             const search = req.query.search ?? null;
@@ -40,7 +70,7 @@ module.exports = {
                 })
             ]);
 
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/desa/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/desa/get');
 
             res.status(200).json({
                 status: 200,
@@ -55,25 +85,75 @@ module.exports = {
         }
     },
 
-    //mendapatkan data desa berdasarkan id
-    getdesaById: async (req, res) => {
+    getById: async (req, res) => {
         try {
-            //mendapatkan data desa berdasarkan id
             let desaGet = await Desa.findOne({
                 where: {
                     id: req.params.id
                 },
             });
 
-            //cek jika desa tidak ada
             if (!desaGet) {
                 res.status(404).json(response(404, 'desa not found'));
                 return;
             }
 
-            //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get desa by id', desaGet));
         } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    update: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+
+            let desanUpdateObj = req.body;
+
+            const validate = v.validate(desanUpdateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            const desan = await Desa.findByPk(id);
+            if (!desan) {
+                res.status(404).json(response(404, 'Data not found'));
+                return;
+            }
+
+            await desan.update(desanUpdateObj);
+
+            await transaction.commit();
+
+            res.status(200).json(response(200, 'success update data', desan));
+        } catch (err) {
+            await transaction.rollback();
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    delete: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+
+            const kecamatan = await Desa.findByPk(id);
+            if (!kecamatan) {
+                res.status(404).json(response(404, 'Data not found'));
+                return;
+            }
+
+            await kecamatan.destroy();
+
+            await transaction.commit();
+
+            res.status(200).json(response(200, 'success delete data'));
+        } catch (err) {
+            await transaction.rollback();
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }

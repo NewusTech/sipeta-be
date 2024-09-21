@@ -1,53 +1,79 @@
 const { response } = require('../../helpers/response.formatter');
 
-const { Kecamatan } = require('../../models');
+const { Desa, Kecamatan, sequelize } = require('../../models');
 const { generatePagination } = require('../../pagination/pagination');
 const Validator = require("fastest-validator");
 const v = new Validator();
 const { Op } = require('sequelize');
 
+const schema = {
+    name: { type: "string", optional: true },
+    alamat: { type: "string", optional: true },
+    camat: { type: "string", optional: true },
+    telp: { type: "string", optional: true },
+};
+
 module.exports = {
 
-    //mendapatkan semua data kecamatan
-    getkecamatan: async (req, res) => {
+    create: async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
-            let kecamatanGets;
+            let kecamatanCreateObj = req.body;
+
+            const validate = v.validate(kecamatanCreateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            let kecamatanCreate = await Kecamatan.create(kecamatanCreateObj);
+
+            await transaction.commit();
+
+            res.status(201).json(response(201, 'success create kecamatan', kecamatanCreate));
+        } catch (err) {
+            await transaction.rollback();
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    get: async (req, res) => {
+        try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
             const search = req.query.search ?? null;
 
+            const whereClause = {};
+
             if (search) {
-                [kecamatanGets, totalCount] = await Promise.all([
-                    Kecamatan.findAll({
-                        where: {
-                           name: { [Op.iLike]: `%${search}%` } 
-                        },
-                        limit: limit,
-                        offset: offset
-                    }),
-                    Kecamatan.count({
-                        where: {
-                            name: { [Op.iLike]: `%${search}%` } 
-                         },
-                    })
-                ]);
-            } else {
-                [kecamatanGets, totalCount] = await Promise.all([
-                    Kecamatan.findAll({
-                        limit: limit,
-                        offset: offset
-                    }),
-                    Kecamatan.count({
-                    })
-                ]);
+                whereClause[Op.or] = [
+                    { name: { [Op.iLike]: `%${search}%` } }
+                ];
             }
 
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/desa/get');
+            const includeModels = [
+                { model: Desa}
+            ];
+
+            const [kecamatanGets, totalCount] = await Promise.all([
+                Kecamatan.findAll({
+                    where: whereClause,
+                    include: includeModels,
+                    limit: limit,
+                    offset: offset
+                }),
+                Kecamatan.count({ 
+                    where: whereClause ,
+                })
+            ]);
+
+            const pagination = generatePagination(totalCount, page, limit, '/api/kecamatan/get');
 
             res.status(200).json({
                 status: 200,
-                message: 'success get artikel',
+                message: 'success get data',
                 data: kecamatanGets,
                 pagination: pagination
             });
@@ -58,25 +84,81 @@ module.exports = {
         }
     },
 
-    //mendapatkan data kecamatan berdasarkan id
-    getkecamatanById: async (req, res) => {
+    getById: async (req, res) => {
         try {
-            //mendapatkan data kecamatan berdasarkan id
+
+            const includeModels = [
+                { model: Desa}
+            ];
+
             let kecamatanGet = await Kecamatan.findOne({
+                include: includeModels,
                 where: {
                     id: req.params.id
                 },
             });
 
-            //cek jika kecamatan tidak ada
             if (!kecamatanGet) {
                 res.status(404).json(response(404, 'kecamatan not found'));
                 return;
             }
 
-            //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get kecamatan by id', kecamatanGet));
         } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    update: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+
+            let kecamatanUpdateObj = req.body;
+
+            const validate = v.validate(kecamatanUpdateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            const kecamatan = await Kecamatan.findByPk(id);
+            if (!kecamatan) {
+                res.status(404).json(response(404, 'Data not found'));
+                return;
+            }
+
+            await kecamatan.update(kecamatanUpdateObj);
+
+            await transaction.commit();
+
+            res.status(200).json(response(200, 'success update kecamatan', kecamatan));
+        } catch (err) {
+            await transaction.rollback();
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    delete: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+
+            const kecamatan = await Kecamatan.findByPk(id);
+            if (!kecamatan) {
+                res.status(404).json(response(404, 'Data not found'));
+                return;
+            }
+
+            await kecamatan.destroy();
+
+            await transaction.commit();
+
+            res.status(200).json(response(200, 'success delete kecamatan'));
+        } catch (err) {
+            await transaction.rollback();
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }

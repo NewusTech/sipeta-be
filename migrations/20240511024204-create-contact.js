@@ -2,23 +2,26 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Kecamatans', {
+    await queryInterface.createTable('Contacts', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      name: {
-        type: Sequelize.STRING
-      },
       alamat: {
         type: Sequelize.STRING
       },
-      camat: {
+      email: {
         type: Sequelize.STRING
       },
       telp: {
+        type: Sequelize.STRING
+      },
+      latitude: {
+        type: Sequelize.STRING
+      },
+      longitude: {
         type: Sequelize.STRING
       },
       createdAt: {
@@ -33,6 +36,6 @@ module.exports = {
 
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Kecamatans');
+    await queryInterface.dropTable('Contacts');
   }
 };

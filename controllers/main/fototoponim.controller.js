@@ -1,8 +1,7 @@
 const { response } = require('../../helpers/response.formatter');
 
 const { Datatoponim, Fototoponim, sequelize } = require('../../models');
-const Validator = require("fastest-validator");
-const v = new Validator();
+const { getKeyFromUrl } = require('../../helpers/awshelper.js');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
@@ -14,40 +13,31 @@ const s3Client = new S3Client({
     useAccelerateEndpoint: true
 });
 
-const getKeyFromUrl = (url) => {
-    const bucketUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
-    if (url.startsWith(bucketUrl)) {
-        return url.replace(bucketUrl, ''); // Menghapus bagian URL sebelum key
-    }
-    return null; // Jika URL tidak sesuai
-};
-
 module.exports = {
 
     getfototoponim: async (req, res) => {
         try {
-          const { datatoponim_id } = req.params;
-    
-          const fotoToponim = await Fototoponim.findAll({
-            where: { datatoponim_id: datatoponim_id }
-          });
-    
-          if (!fotoToponim) {
-            return res.status(404).json(response(404, 'Detailtoponim not found'));
-          }
-    
-          res.status(200).json(response(200, 'Detailtoponim found', fotoToponim));
+            const { datatoponim_id } = req.params;
+
+            const fotoToponim = await Fototoponim.findAll({
+                where: { datatoponim_id: datatoponim_id }
+            });
+
+            if (!fotoToponim) {
+                return res.status(404).json(response(404, 'Detailtoponim not found'));
+            }
+
+            res.status(200).json(response(200, 'Detailtoponim found', fotoToponim));
         } catch (err) {
-          res.status(500).json(response(500, 'Internal server error', err));
+            res.status(500).json(response(500, 'Internal server error', err));
         }
-      },
+    },
 
     createFototoponim: async (req, res) => {
-        const transaction = await sequelize.transaction(); // Memulai transaksi
+        const transaction = await sequelize.transaction();
         try {
-            const { id } = req.params; // Ambil toponim ID dari parameter
+            const { id } = req.params;
 
-            // Cari toponim berdasarkan ID
             const toponim = await Datatoponim.findByPk(id);
             if (!toponim) {
                 return res.status(404).json(response(404, 'Datatoponim tidak ditemukan'));
@@ -61,7 +51,6 @@ module.exports = {
             const timestamp = new Date().getTime();
             const uniqueFileName = `${timestamp}-${file.originalname}`;
 
-            // Upload foto baru ke S3
             const uploadParams = {
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `${process.env.PATH_AWS}/fototoponim/${uniqueFileName}`,
@@ -82,7 +71,6 @@ module.exports = {
 
             await toponim.save({ transaction });
 
-            // Commit transaksi
             await transaction.commit();
             res.status(200).json(response(200, 'Foto berhasil disubmit', toponim));
 
@@ -94,11 +82,10 @@ module.exports = {
     },
 
     updateSketsa: async (req, res) => {
-        const transaction = await sequelize.transaction(); // Memulai transaksi
+        const transaction = await sequelize.transaction();
         try {
-            const { id } = req.params; // Ambil toponim ID dari parameter
+            const { id } = req.params;
 
-            // Cari toponim berdasarkan ID
             const toponim = await Datatoponim.findByPk(id);
             if (!toponim) {
                 return res.status(404).json(response(404, 'Datatoponim tidak ditemukan'));
@@ -112,7 +99,6 @@ module.exports = {
             const timestamp = new Date().getTime();
             const uniqueFileName = `${timestamp}-${file.originalname}`;
 
-            // Upload sketsa baru ke S3
             const uploadParams = {
                 Bucket: process.env.AWS_S3_BUCKET,
                 Key: `${process.env.PATH_AWS}/sketsa/${uniqueFileName}`,
@@ -143,11 +129,9 @@ module.exports = {
                 }
             }
 
-            // Update sketsa di database
             toponim.sketsa = sketsaKey;
             await toponim.save({ transaction });
 
-            // Commit transaksi
             await transaction.commit();
             res.status(200).json(response(200, 'Sketsa berhasil diupdate', toponim));
 
@@ -159,11 +143,10 @@ module.exports = {
     },
 
     updateDocpendukung: async (req, res) => {
-        const transaction = await sequelize.transaction(); // Memulai transaksi
+        const transaction = await sequelize.transaction();
         try {
-            const { id } = req.params; // Ambil toponim ID dari parameter
+            const { id } = req.params;
 
-            // Cari toponim berdasarkan ID
             const toponim = await Datatoponim.findByPk(id);
             if (!toponim) {
                 return res.status(404).json(response(404, 'Datatoponim tidak ditemukan'));
@@ -212,7 +195,6 @@ module.exports = {
             toponim.docpendukung = docpendukungKey;
             await toponim.save({ transaction });
 
-            // Commit transaksi
             await transaction.commit();
             res.status(200).json(response(200, 'Docpendukung berhasil diupdate', toponim));
 
@@ -224,9 +206,9 @@ module.exports = {
     },
 
     updateFototoponim: async (req, res) => {
-        const transaction = await sequelize.transaction(); // Memulai transaksi
+        const transaction = await sequelize.transaction();
         try {
-            const { id } = req.params; // Ambil toponim ID dari parameter
+            const { id } = req.params;
 
             const toponim = await Fototoponim.findByPk(id);
             if (!toponim) {
@@ -275,7 +257,6 @@ module.exports = {
             toponim.foto_url = fotoKey;
             await toponim.save({ transaction });
 
-            // Commit transaksi
             await transaction.commit();
             res.status(200).json(response(200, 'Sketsa berhasil diupdate', toponim));
 

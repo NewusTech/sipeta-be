@@ -15,6 +15,15 @@ module.exports = {
       kecamatan_id: {
         type: Sequelize.INTEGER
       },
+      alamat: {
+        type: Sequelize.STRING
+      },
+      kepala: {
+        type: Sequelize.STRING
+      },
+      telp: {
+        type: Sequelize.STRING
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
