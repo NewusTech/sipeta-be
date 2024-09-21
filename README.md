@@ -7,18 +7,9 @@ Untuk menjalankan aplikasi, ikuti langkah-langkah berikut:
 0. Simple running 
     ```bash
     npm install
-    ```
-
-    ```bash
     npx sequelize-cli db:migrate:undo:all
-    ```
-    ```bash
     npx sequelize-cli db:migrate
-    ```
-    ```bash
     npx sequelize-cli db:seed:all
-    ```
-    ```bash
     npm start
     ```
 
