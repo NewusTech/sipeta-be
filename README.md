@@ -13,6 +13,8 @@ Untuk menjalankan aplikasi, ikuti langkah-langkah berikut:
     npm start
     ```
 
+Detail langkah-langkah sebagai berikut:
+
 1. **Install dependencies**:
     ```bash
     npm install
