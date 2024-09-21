@@ -4,16 +4,22 @@
 
 Untuk menjalankan aplikasi, ikuti langkah-langkah berikut:
 
--> **Fast Running**
     ```bash
     npm install
+    ```
+    ```bash
     npx sequelize-cli db:migrate:undo:all
+    ```
+    ```bash
     npx sequelize-cli db:migrate
+    ```
+    ```bash
     npx sequelize-cli db:seed:all
+    ```
+    ```bash
     npm start
     ```
 
--> Detail
 1. **Install dependencies**:
     ```bash
     npm install
