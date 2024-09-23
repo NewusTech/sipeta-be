@@ -416,57 +416,6 @@ module.exports = {
         }
     },
 
-    //update data person
-    //user update sendiri
-    updateuserdocs: async (req, res) => {
-        const transaction = await sequelize.transaction();
-        try {
-            // Mendapatkan data userinfo untuk pengecekan
-            let userinfoGet = await Userinfo.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            });
-
-            // Cek apakah data userinfo ada
-            if (!userinfoGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'userinfo not found'));
-                return;
-            }
-
-            let userinfoUpdateObj = {};
-
-            // Update userinfo
-            await Userinfo.update(userinfoUpdateObj, {
-                where: {
-                    slug: req.params.slug,
-                },
-                transaction
-            });
-
-            // Mendapatkan data userinfo setelah update
-            let userinfoAfterUpdate = await Userinfo.findOne({
-                where: {
-                    slug: req.params.slug,
-                },
-                transaction
-            });
-
-            await transaction.commit();
-
-            // Response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update userinfo', userinfoAfterUpdate));
-
-        } catch (err) {
-            await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
-        }
-    },
-
     //menghapus user berdasarkan slug
     deleteuser: async (req, res) => {
         const transaction = await sequelize.transaction();

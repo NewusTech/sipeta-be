@@ -44,45 +44,65 @@ module.exports = {
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
             const search = req.query.search ?? null;
-
+    
+            const desaPage = parseInt(req.query.desaPage) || 1; // Desa pagination page
+            const desaLimit = parseInt(req.query.desaLimit) || 10; // Desa items per page
+            const desaOffset = (desaPage - 1) * desaLimit;
+    
             const whereClause = {};
-
+    
             if (search) {
                 whereClause[Op.or] = [
                     { name: { [Op.iLike]: `%${search}%` } }
                 ];
             }
-
-            const includeModels = [
-                { model: Desa}
-            ];
-
-            const [kecamatanGets, totalCount] = await Promise.all([
-                Kecamatan.findAll({
-                    where: whereClause,
-                    include: includeModels,
-                    limit: limit,
-                    offset: offset
-                }),
-                Kecamatan.count({ 
-                    where: whereClause ,
+    
+            const kecamatans = await Kecamatan.findAll({
+                where: whereClause,
+                limit: limit,
+                offset: offset
+            });
+    
+            // Loop through each Kecamatan and get paginated Desas for each
+            const kecamatanWithDesas = await Promise.all(
+                kecamatans.map(async (kecamatan) => {
+                    const { count: desaCount, rows: desaRows } = await Desa.findAndCountAll({
+                        where: { kecamatan_id: kecamatan.id }, // Only get Desas for this Kecamatan
+                        limit: desaLimit,
+                        offset: desaOffset
+                    });
+    
+                    return {
+                        ...kecamatan.toJSON(), // Include all Kecamatan fields
+                        Desas: {
+                            data: desaRows, // Paginated Desa data
+                            pagination: {
+                                page: desaPage,
+                                perPage: desaLimit,
+                                totalPages: Math.ceil(desaCount / desaLimit),
+                                totalCount: desaCount
+                            }
+                        }
+                    };
                 })
-            ]);
-
+            );
+    
+            const totalCount = await Kecamatan.count({ where: whereClause });
             const pagination = generatePagination(totalCount, page, limit, '/api/kecamatan/get');
-
+    
             res.status(200).json({
                 status: 200,
                 message: 'success get data',
-                data: kecamatanGets,
+                data: kecamatanWithDesas,
                 pagination: pagination
             });
-
+    
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
     getById: async (req, res) => {
         try {
