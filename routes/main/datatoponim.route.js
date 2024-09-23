@@ -10,10 +10,14 @@ const mid = require('../../middlewares/auth.middleware');
 const express = require('express');
 const route = express.Router();
 
-route.get('/datatoponim/get', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.get);
-route.get('/datatoponim/get/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.getById);
+route.get('/datatoponim/get', [mid.checkRoles()], datatoponimController.get);
+route.get('/datatoponim/get/:id', [mid.checkRoles()], datatoponimController.getById);
+
 route.post('/datatoponim/create', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.create);
+
 route.put('/datatoponim/update/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.update);
+route.put('/datatoponim/verif/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.update);
+
 route.delete('/datatoponim/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.delete);
 
 module.exports = route;

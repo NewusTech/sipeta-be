@@ -19,19 +19,29 @@ const schema = {
     lintang: { type: "string", convert: true, optional: true },
     kecamatan_id: { type: "string", convert: true, optional: true },
     desa_id: { type: "string", convert: true, optional: true },
+    status: { type: "string", convert: true, optional: true },
+    verifiednotes: { type: "string", optional: true },
+    verifiedat: { type: "string", optional: true },
 };
 
 module.exports = {
 
     get: async (req, res) => {
         try {
-            const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id } = req.query;
+
+            const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
             const page = parseInt(req.query.page)|| 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
             const whereClause = {};
             const detailToponimWhereClause = {};
-    
+
+            if (data?.role === "User" || !data?.role) {
+                whereClause.status = 1;
+            } else {
+                if (status) whereClause.status = status;
+            }
+
             if (search) {
                 whereClause[Op.or] = [
                     { nama_lokal: { [Op.iLike]: `%${search}%` } },
@@ -118,6 +128,8 @@ module.exports = {
         const transaction = await sequelize.transaction();
         try {
             let toponimCreateObj = req.body;
+
+            toponimCreateObj.status = 0;
 
             const validate = v.validate(toponimCreateObj, schema);
             if (validate.length > 0) {

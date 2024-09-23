@@ -51,6 +51,15 @@ module.exports = {
       docpendukung: {
         type: Sequelize.STRING,
       },
+      status: {
+        type: Sequelize.SMALLINT
+      },
+      verifiednotes: {
+        type: Sequelize.TEXT,
+      },
+      verifiedat: {
+        type: Sequelize.DATE,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

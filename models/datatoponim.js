@@ -39,7 +39,10 @@ module.exports = (sequelize, DataTypes) => {
     kecamatan_id: DataTypes.INTEGER,
     desa_id: DataTypes.INTEGER,
     sketsa: DataTypes.STRING,
-    docpendukung: DataTypes.STRING
+    docpendukung: DataTypes.STRING,
+    status: DataTypes.SMALLINT,
+    verifiednotes: DataTypes.TEXT,
+    verifiedat: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'Datatoponim',
