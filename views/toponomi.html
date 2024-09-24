@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pendataan Nama Rupabumi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        td {
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        img {
+            max-width: 50px;
+            max-height: 50px;
+        }
+
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h3 class="center">Pendataan Nama Rupabumi</h3>
+    {{instansiInfo}}
+    <table>
+        <thead>
+            <tr>
+                <th class="center">Tanggal</th>
+                <!-- <th class="center">Status</th>
+                <th class="center">ID Toponim</th>
+                <th class="center">Nama Tempat</th>
+                <th class="center">Kecamatan</th>
+                <th class="center">Desa</th>
+                <th class="center">Kecamatan</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {{reportTableRows}}
+        </tbody>
+    </table>
+</body>
+
+</html>

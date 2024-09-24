@@ -45,8 +45,8 @@ module.exports = {
             const offset = (page - 1) * limit;
             const search = req.query.search ?? null;
     
-            const desaPage = parseInt(req.query.desaPage) || 1; // Desa pagination page
-            const desaLimit = parseInt(req.query.desaLimit) || 10; // Desa items per page
+            const desaPage = parseInt(req.query.desaPage) || 1; 
+            const desaLimit = parseInt(req.query.desaLimit) || 10;
             const desaOffset = (desaPage - 1) * desaLimit;
     
             const whereClause = {};
@@ -63,19 +63,18 @@ module.exports = {
                 offset: offset
             });
     
-            // Loop through each Kecamatan and get paginated Desas for each
             const kecamatanWithDesas = await Promise.all(
                 kecamatans.map(async (kecamatan) => {
                     const { count: desaCount, rows: desaRows } = await Desa.findAndCountAll({
-                        where: { kecamatan_id: kecamatan.id }, // Only get Desas for this Kecamatan
+                        where: { kecamatan_id: kecamatan.id },
                         limit: desaLimit,
                         offset: desaOffset
                     });
     
                     return {
-                        ...kecamatan.toJSON(), // Include all Kecamatan fields
+                        ...kecamatan.toJSON(), 
                         Desas: {
-                            data: desaRows, // Paginated Desa data
+                            data: desaRows, 
                             pagination: {
                                 page: desaPage,
                                 perPage: desaLimit,

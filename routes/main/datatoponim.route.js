@@ -20,4 +20,6 @@ route.put('/datatoponim/verif/:id', [mid.checkRolesAndLogout(['Super Admin', 'Ka
 
 route.delete('/datatoponim/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], datatoponimController.delete);
 
+route.get('/datatoponim/pdf', [mid.checkRoles()], datatoponimController.pdf);
+
 module.exports = route;
