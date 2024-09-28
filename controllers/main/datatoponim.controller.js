@@ -361,7 +361,7 @@ module.exports = {
             });
 
             const exportData = dataGets.map(item => ({
-                Tanggal: new Date(item.createdAt).toLocaleDateString(),
+                Tanggal: new Date(item?.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
                 Status: item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi',
                 ID_Toponim: item.id_toponim,
                 Nama_Tempat: item.nama_lokal,
@@ -395,20 +395,20 @@ module.exports = {
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'D3D3D3' } 
-                  };
-              });
+                    fgColor: { argb: 'D3D3D3' }
+                };
+            });
 
             exportData.forEach((data, index) => {
                 const row = worksheet.addRow(data, 'n');
-                
+
                 row.eachCell(cell => {
-                  cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
                 });
-              });
+            });
 
             worksheet.eachRow({ includeEmpty: true }, function (row, rowNumber) {
-                if (rowNumber >= 2) { 
+                if (rowNumber >= 2) {
                     row.eachCell({ includeEmpty: true }, function (cell, colNumber) {
                         cell.border = {
                             top: { style: 'thin' },
@@ -429,6 +429,190 @@ module.exports = {
             res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
         }
+    },
+
+    csv: async (req, res) => {
+        try {
+            const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
+            const whereClause = {};
+            const detailToponimWhereClause = {};
+
+            if (search) {
+                whereClause[Op.or] = [
+                    { nama_lokal: { [Op.iLike]: `%${search}%` } },
+                    { nama_spesifik: { [Op.iLike]: `%${search}%` } },
+                    { nama_peta: { [Op.iLike]: `%${search}%` } }
+                ];
+                detailToponimWhereClause[Op.or] = [
+                    { nama_lain: { [Op.iLike]: `%${search}%` } }
+                ];
+            }
+
+            if (klasifikasi_id) whereClause.klasifikasi_id = klasifikasi_id;
+            if (unsur_id) whereClause.unsur_id = unsur_id;
+            if (kecamatan_id) whereClause.kecamatan_id = kecamatan_id;
+            if (desa_id) whereClause.desa_id = desa_id;
+            if (status) whereClause.status = status;
+
+            const dataGets = await Datatoponim.findAll({
+                where: whereClause,
+                include: [
+                    { model: Kecamatan, attributes: ['name', 'id'] },
+                    { model: Desa, attributes: ['name', 'id'] },
+                    { model: Unsur, attributes: ['name', 'id'] },
+                    { model: Klasifikasi, attributes: ['name', 'id'] },
+                    { model: Detailtoponim, where: detailToponimWhereClause, required: false },
+                    { model: Fototoponim },
+                ],
+                order: [['id', 'DESC']]
+            });
+
+            const exportData = dataGets.map(item => [
+                `"${new Date(item?.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}","${item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi'}","${item.id_toponim}","${item.nama_lokal}","${item.Kecamatan.name}","${item.Desa.name}","${item.verifiednotes || '-'}"`
+            ]);
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Pendataan Nama Rupabumi');
+
+            worksheet.addRow([`"Tanggal,"Status","ID Toponim","Nama Tempat","Kecamatan","Desa","Keterangan"`]);
+
+            exportData.forEach(data => {
+                worksheet.addRow(Object.values(data));
+            });
+
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename=Pendataan_Rupabumi_${new Date().getTime()}.csv`);
+
+            await workbook.csv.write(res);
+            res.end();
+        } catch (err) {
+            console.error('Error exporting CSV: ', err.message);
+            res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+    },
+
+    json: async (req, res) => {
+        try {
+            const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
+            const whereClause = {};
+            const detailToponimWhereClause = {};
+
+            if (search) {
+                whereClause[Op.or] = [
+                    { nama_lokal: { [Op.iLike]: `%${search}%` } },
+                    { nama_spesifik: { [Op.iLike]: `%${search}%` } },
+                    { nama_peta: { [Op.iLike]: `%${search}%` } }
+                ];
+                detailToponimWhereClause[Op.or] = [
+                    { nama_lain: { [Op.iLike]: `%${search}%` } }
+                ];
+            }
+
+            if (klasifikasi_id) whereClause.klasifikasi_id = klasifikasi_id;
+            if (unsur_id) whereClause.unsur_id = unsur_id;
+            if (kecamatan_id) whereClause.kecamatan_id = kecamatan_id;
+            if (desa_id) whereClause.desa_id = desa_id;
+            if (status) whereClause.status = status;
+
+            const dataGets = await Datatoponim.findAll({
+                where: whereClause,
+                include: [
+                    { model: Kecamatan, attributes: ['name', 'id'] },
+                    { model: Desa, attributes: ['name', 'id'] },
+                    { model: Unsur, attributes: ['name', 'id'] },
+                    { model: Klasifikasi, attributes: ['name', 'id'] },
+                    { model: Detailtoponim, where: detailToponimWhereClause, required: false },
+                    { model: Fototoponim },
+                ],
+                order: [['id', 'DESC']]
+            });
+
+            const features = dataGets.map(item => {
+                const fotos = item?.Fototoponims || [];
+                const fotoUrls = fotos.map(foto => foto.foto_url);
+
+                return {
+                    type: "Feature",
+                    properties: {
+                        statpub: null,
+                        statpem: null,
+                        status: item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi',
+                        id_toponim: item?.id_toponim,
+                        zonautm: item?.Detailtoponim?.zona_utm,
+                        nlp: item?.Detailtoponim?.nlp,
+                        klstpn: item?.Klasifikasi?.name,
+                        lcode: item?.Detailtoponim?.lcode,
+                        id_unsur: item?.unsur_id,
+                        ftype: item?.Unsur?.name,
+                        namlok: item?.nama_lokal,
+                        namspe: item?.nama_spesifik,
+                        nammap: item?.nama_peta,
+                        namgaz: item?.Detailtoponim?.nama_gazeter,
+                        alias: item?.Detailtoponim?.nama_lain,
+                        aslbhs: item?.Detailtoponim?.asal_bahasa,
+                        artinam: item?.Detailtoponim?.arti_nama,
+                        sjhnam: item?.Detailtoponim?.sejarah_nama,
+                        nambef: item?.Detailtoponim?.nama_sebelumnya,
+                        namrec: item?.Detailtoponim?.nama_rekomendasi,
+                        ucapan: item?.Detailtoponim?.ucapan,
+                        ejaan: item?.Detailtoponim?.ejaan,
+                        koordinat1: item?.koordinat,
+                        koordx: item?.bujur,
+                        koordy: item?.lintang,
+                        koordinat2: null,
+                        koordx2: null,
+                        koordy2: null,
+                        elevasi: null,
+                        akurasi: item?.Detailtoponim?.akurasi,
+                        negara: "Indonesia",
+                        id_wilayah_administrasi: null,
+                        wadmpr: "Lampung",
+                        wadmkk: "Lampung Utara",
+                        wadmkc: item?.Kecamatan?.name,
+                        wadmkd: item?.Kelurahan?.name,
+                        ksurveyor: null,
+                        nsurveyor: null,
+                        narsum: item?.Detailtoponim?.narasumber,
+                        tglsurvei: new Date(item?.createdAt).toISOString().split('T')[0],
+                        sumber: item?.Detailtoponim?.sumber_data,
+                        remark: null,
+                        foto1: fotoUrls[0] || null,
+                        foto2: fotoUrls[1] || null,
+                        foto3: fotoUrls[2] || null,
+                        foto4: fotoUrls[3] || null,
+                        sketsa: item?.sketsa,
+                        rekaman1: null,
+                        rekaman2: null,
+                        created_by: null,
+                        geom: null,
+                        b_box: null,
+                        geometry: JSON.stringify({
+                            type: "Point",
+                            coordinates: [item?.bujur, item?.lintang]
+                        })
+                    },
+                    geometry: {
+                        type: "Point",
+                        coordinates: [item?.bujur, item?.lintang]
+                    }
+                };
+            });
+
+            const geoJson = {
+                type: "FeatureCollection",
+                features: features
+            };
+
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify(geoJson, null, 2));
+        } catch (err) {
+            console.error('Error exporting JSON: ', err.message);
+            res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
+    },
+
+    shp: async (req, res) => {
+
     },
 
 }
