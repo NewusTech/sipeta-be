@@ -5,7 +5,7 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Datatoponim extends Model {
     static associate(models) {
-      Datatoponim.hasMany(models.Detailtoponim, {
+      Datatoponim.hasOne(models.Detailtoponim, {
         foreignKey: 'datatoponim_id',
       });
       Datatoponim.hasMany(models.Fototoponim, {
