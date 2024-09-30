@@ -35,6 +35,17 @@ module.exports = {
         name: 'Surveyor',
         nik: 'Surveyor',
         slug: "Surveyor-20240620041615213",
+        kecamatan_id: 1,
+        desa_id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Surveyor 2',
+        nik: 'Surveyor 2',
+        slug: "Surveyor2-20240620041615213",
+        kecamatan_id: 2,
+        desa_id: 2,
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -42,6 +53,8 @@ module.exports = {
         name: 'Newus',
         nik: '1234567812345678',
         slug: "Newus-20240620041615213",
+        kecamatan_id: 1,
+        desa_id: 1,
         email: 'newus@gmail.com',
         telepon: '086969696969',
         alamat: 'Bandar Lampung',

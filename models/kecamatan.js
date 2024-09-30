@@ -8,6 +8,9 @@ module.exports = (sequelize, DataTypes) => {
       Kecamatan.hasMany(models.Desa, {
         foreignKey: 'kecamatan_id',
       });
+      Kecamatan.hasMany(models.Userinfo, {
+        foreignKey: 'kecamatan_id',
+      });
     }
   }
   Kecamatan.init({

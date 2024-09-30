@@ -8,6 +8,12 @@ module.exports = (sequelize, DataTypes) => {
       Userinfo.hasOne(models.User, {
         foreignKey: 'userinfo_id',
       });
+      Userinfo.belongsTo(models.Kecamatan, {
+        foreignKey: 'kecamatan_id',
+      });
+      Userinfo.belongsTo(models.Desa, {
+        foreignKey: 'desa_id',
+      });
     }
   }
   Userinfo.init({
@@ -22,6 +28,8 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
     },
     telepon: DataTypes.STRING,
+    kecamatan_id: DataTypes.INTEGER,
+    desa_id: DataTypes.INTEGER,
     alamat: DataTypes.STRING,
     agama: DataTypes.INTEGER,
     tempat_lahir: DataTypes.STRING,

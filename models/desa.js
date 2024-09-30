@@ -8,6 +8,9 @@ module.exports = (sequelize, DataTypes) => {
       Desa.belongsTo(models.Kecamatan, {
         foreignKey: 'kecamatan_id',
       });
+      Desa.hasMany(models.Userinfo, {
+        foreignKey: 'desa_id',
+      });
     }
   }
   Desa.init({

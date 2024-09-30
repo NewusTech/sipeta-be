@@ -1,6 +1,6 @@
 const { response } = require('../../helpers/response.formatter');
 
-const { User, Userinfo, Role, sequelize } = require('../../models');
+const { User, Userinfo, Kecamatan, Desa, Role, sequelize } = require('../../models');
 
 const passwordHash = require('password-hash');
 const Validator = require("fastest-validator");
@@ -64,6 +64,16 @@ module.exports = {
                                     },
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['name', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['name', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                         limit: limit,
                         offset: offset
@@ -87,6 +97,16 @@ module.exports = {
                                     },
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['name', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['name', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                     })
                 ]);
@@ -107,6 +127,16 @@ module.exports = {
                                     },
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['name', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['name', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                     }),
                     Userinfo.count({
@@ -122,6 +152,16 @@ module.exports = {
                                     },
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['name', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['name', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                     })
                 ]);
@@ -138,6 +178,10 @@ module.exports = {
                     nik: user.nik,
                     email: user.email,
                     telepon: user.telepon,
+                    kecamatan_id: user.kecamatan_id,
+                    kecamatan_name: user.Kecamatan?.name,
+                    desa_id: user.desa_id,
+                    desa_name: user.Desa?.name,
                     alamat: user.alamat,
                     agama: user.agama,
                     tempat_lahir: user.tempat_lahir,
@@ -190,7 +234,17 @@ module.exports = {
                     {
                         model: User,
                         attributes: ['id'],
-                    }
+                    },
+                    {
+                        model: Kecamatan,
+                        attributes: ['name', 'id'],
+                        as: 'Kecamatan'
+                    },
+                    {
+                        model: Desa,
+                        attributes: ['name', 'id'],
+                        as: 'Desa'
+                    },
                 ]
             });
 
@@ -218,6 +272,8 @@ module.exports = {
                 nik: { type: "string", length: 16 },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
+                kecamatan_id: { type: "string", min: 1, optional: true },
+                desa_id: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
                 agama: { type: "number", optional: true },
                 tempat_lahir: { type: "string", min: 2, optional: true },
@@ -238,6 +294,8 @@ module.exports = {
                 nik: req.body.nik,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
                 alamat: req.body.alamat,
                 agama: req.body.agama ? Number(req.body.agama) : null,
                 tempat_lahir: req.body.tempat_lahir,
@@ -332,6 +390,8 @@ module.exports = {
                 nik: { type: "string", length: 16, optional: true },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
+                kecamatan_id: { type: "string", min: 1, optional: true },
+                desa_id: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
                 agama: { type: "number", optional: true },
                 tempat_lahir: { type: "string", min: 2, optional: true },
@@ -349,6 +409,8 @@ module.exports = {
                 nik: req.body.nik,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
                 alamat: req.body.alamat,
                 agama: req.body.agama ? Number(req.body.agama) : undefined,
                 tempat_lahir: req.body.tempat_lahir,
