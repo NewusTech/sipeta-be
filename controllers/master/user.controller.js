@@ -1,6 +1,6 @@
 const { response } = require('../../helpers/response.formatter');
 
-const { User, Token, Role, Userinfo, Userpermission, Permission, sequelize } = require('../../models');
+const { User, Token, Role, Userinfo, Kecamatan, Desa, Userpermission, Permission, sequelize } = require('../../models');
 const baseConfig = require('../../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -37,6 +37,8 @@ module.exports = {
                 password: { type: "string", min: 5, max: 16 },
                 role_id: { type: "number", optional: true },
                 alamat: { type: "string", min: 3, optional: true },
+                kecamatan_id: { type: "string", min: 1, optional: true },
+                desa_id: { type: "string", min: 1, optional: true },
             };
 
             // Validasi
@@ -47,7 +49,9 @@ module.exports = {
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
                 email: req.body.email,
                 telepon: req.body.telepon,
-                alamat: req.body.alamat
+                alamat: req.body.alamat,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
             }, schema);
 
             if (validate.length > 0) {
@@ -81,10 +85,10 @@ module.exports = {
                 email: req.body.email,
                 telepon: req.body.telepon,
                 alamat: req.body.alamat,
-                slug: slug
+                slug: slug,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
             };
-
-            console.log("babi", userinfoCreateObj)
 
             // Membuat entri baru di tabel userinfo
             let userinfoCreate = await Userinfo.create(userinfoCreateObj);
@@ -265,6 +269,18 @@ module.exports = {
                         {
                             model: Userinfo,
                             as: 'Userinfo',
+                            include: [
+                                {
+                                    model: Kecamatan,
+                                    attributes: ['name', 'id'],
+                                    as: 'Kecamatan'
+                                },
+                                {
+                                    model: Desa,
+                                    attributes: ['name', 'id'],
+                                    as: 'Desa'
+                                }
+                            ]
                         },
                     ],
                     limit: limit,
@@ -286,6 +302,10 @@ module.exports = {
                     nik: user.Userinfo?.nik,
                     role_id: user.Role?.id,
                     role_name: user.Role?.name,
+                    kecamatan_id: user.Userinfo?.Kecamatan?.id,
+                    kecamatan_name: user.Userinfo?.Kecamatan?.name,
+                    desa_id: user.Userinfo?.Desa?.id,
+                    desa_name: user.Userinfo?.Desa?.name,
                     nik: user.Userinfo?.nik,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt
@@ -329,7 +349,19 @@ module.exports = {
                     },
                     {
                         model: Userinfo,
-                        as: 'Userinfo'
+                        as: 'Userinfo',
+                        include: [
+                            {
+                                model: Kecamatan,
+                                attributes: ['name', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['name', 'id'],
+                                as: 'Desa'
+                            }
+                        ]
                     },
                 ],
                 attributes: { exclude: ['Role', 'Userinfo'] }
@@ -347,6 +379,10 @@ module.exports = {
                 nik: userGet.Userinfo?.nik,
                 role_id: userGet.Role?.id,
                 role_name: userGet.Role?.name,
+                kecamatan_id: userGet.Userinfo?.Kecamatan?.id,
+                kecamatan_name: userGet.Userinfo?.Kecamatan?.name,
+                desa_id: userGet.Userinfo?.Desa?.id,
+                desa_name: userGet.Userinfo?.Desa?.name,
                 createdAt: userGet.createdAt,
                 updatedAt: userGet.updatedAt
             };
@@ -381,6 +417,18 @@ module.exports = {
                     {
                         model: Userinfo,
                         as: 'Userinfo',
+                        include: [
+                            {
+                                model: Kecamatan,
+                                attributes: ['name', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['name', 'id'],
+                                as: 'Desa'
+                            }
+                        ]
                     },
                 ],
                 attributes: { exclude: ['Role', 'Userinfo'] }
@@ -399,6 +447,10 @@ module.exports = {
                 nik: userGet.Userinfo?.nik,
                 email: userGet.Userinfo?.email,
                 telepon: userGet.Userinfo?.telepon,
+                kecamatan_id: userGet.Userinfo?.Kecamatan?.id,
+                kecamatan_name: userGet.Userinfo?.Kecamatan?.name,
+                desa_id: userGet.Userinfo?.Desa?.id,
+                desa_name: userGet.Userinfo?.Desa?.name,
                 alamat: userGet.Userinfo?.alamat,
                 agama: userGet.Userinfo?.agama,
                 tempat_lahir: userGet.Userinfo?.tempat_lahir,
