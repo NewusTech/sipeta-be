@@ -9,6 +9,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
+const shpwrite = require('shp-write');
 
 const schema = {
     id_toponim: { type: "string", optional: true },
@@ -130,10 +131,16 @@ module.exports = {
 
     create: async (req, res) => {
         const transaction = await sequelize.transaction();
+        console.log(data)
         try {
             let toponimCreateObj = req.body;
 
-            toponimCreateObj.status = 0;
+            if (data.role === 'User') {
+                toponimCreateObj.status = 0;
+            } else {
+                toponimCreateObj.status = 1;
+                toponimCreateObj.verifiedat = new Date().toISOString();
+            }
 
             const validate = v.validate(toponimCreateObj, schema);
             if (validate.length > 0) {
@@ -612,7 +619,98 @@ module.exports = {
     },
 
     shp: async (req, res) => {
+        try {
+            const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
+            const whereClause = {};
+            const detailToponimWhereClause = {};
 
+            // Filtering logic (sesuaikan sesuai dengan query filter yang Anda miliki)
+            if (search) {
+                whereClause[Op.or] = [
+                    { nama_lokal: { [Op.iLike]: `%${search}%` } },
+                    { nama_spesifik: { [Op.iLike]: `%${search}%` } },
+                    { nama_peta: { [Op.iLike]: `%${search}%` } }
+                ];
+                detailToponimWhereClause[Op.or] = [
+                    { nama_lain: { [Op.iLike]: `%${search}%` } }
+                ];
+            }
+
+            if (klasifikasi_id) whereClause.klasifikasi_id = klasifikasi_id;
+            if (unsur_id) whereClause.unsur_id = unsur_id;
+            if (kecamatan_id) whereClause.kecamatan_id = kecamatan_id;
+            if (desa_id) whereClause.desa_id = desa_id;
+            if (status) whereClause.status = status;
+
+            // Mengambil data dari database
+            const dataGets = await Datatoponim.findAll({
+                where: whereClause,
+                include: [
+                    { model: Kecamatan, attributes: ['name', 'id'] },
+                    { model: Desa, attributes: ['name', 'id'] },
+                    { model: Unsur, attributes: ['name', 'id'] },
+                    { model: Klasifikasi, attributes: ['name', 'id'] },
+                    { model: Detailtoponim, where: detailToponimWhereClause, required: false },
+                    { model: Fototoponim },
+                ],
+                order: [['id', 'DESC']]
+            });
+
+            // Struktur SHP yang akan digunakan
+            const geoJsonFeatures = dataGets.map(item => ({
+                type: 'Feature',
+                properties: {
+                    statpub: "Terbit",
+                    status: item.status === 1 ? "Diterima" : "Ditolak",
+                    id_toponim: item.id_toponim,
+                    klasifikasi: item.Klasifikasi.name,
+                    unsur: item.Unsur.name,
+                    nama_lokal: item.nama_lokal,
+                    nama_spesifik: item.nama_spesifik,
+                    nama_peta: item.nama_peta,
+                    koordinat1: item.koordinat1,
+                    remark: "RDTR BWP Simpang Empat - Batulicin"
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [parseFloat(item.koordx), parseFloat(item.koordy)]
+                }
+            }));
+
+            const geoJson = {
+                type: "FeatureCollection",
+                features: geoJsonFeatures
+            };
+
+            // Pengaturan file output (Polygon/Polyline juga bisa diatur jika ada)
+            const shpFileBuffer = shpwrite.zip(geoJson, {
+                folder: 'toponim_shapefile', // Nama folder di dalam file zip
+                types: {
+                    point: 'toponim_point'  // Nama file SHP di dalam zip
+                }
+            });
+
+            const fileName = 'toponim_data.zip';
+            const filePath = path.join(__dirname, fileName);
+
+            // Simpan ke disk untuk sementara
+            fs.writeFileSync(filePath, Buffer.from(shpFileBuffer));
+
+            // Mengirimkan file sebagai response download
+            res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+            res.setHeader('Content-Type', 'application/zip');
+            res.sendFile(filePath, (err) => {
+                if (err) {
+                    console.log('Error sending SHP file:', err.message);
+                }
+
+                // Hapus file setelah pengiriman selesai
+                fs.unlinkSync(filePath);
+            });
+        } catch (err) {
+            console.error('Error exporting SHP: ', err.message);
+            res.status(500).json({ status: 500, message: 'Internal Server Error' });
+        }
     },
 
 }

@@ -35,6 +35,7 @@
     "pg-hstore": "^2.3.4",
     "puppeteer": "^22.10.0",
     "sequelize": "^6.37.3",
+    "shp-write": "^0.3.2",
     "slugify": "^1.6.6",
     "winston": "^3.13.0"
   },

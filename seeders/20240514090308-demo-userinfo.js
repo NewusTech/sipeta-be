@@ -32,6 +32,13 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        name: 'Surveyor',
+        nik: 'Surveyor',
+        slug: "Surveyor-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
         name: 'Newus',
         nik: '1234567812345678',
         slug: "Newus-20240620041615213",
