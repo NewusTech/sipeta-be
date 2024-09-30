@@ -24,6 +24,11 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        name: 'Surveyor',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
         name: 'User',
         createdAt: new Date(),
         updatedAt: new Date()

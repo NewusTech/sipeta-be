@@ -10,7 +10,7 @@ const mid = require('../../middlewares/auth.middleware');
 const express = require('express');
 const route = express.Router();
 
-route.post('/detailtoponim/input', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], detailtoponimController.createOrUpdate);
+route.post('/detailtoponim/input', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'Surveyor', 'User'])], detailtoponimController.createOrUpdate);
 route.get('/detailtoponim/get/:datatoponim_id', detailtoponimController.get);
 route.delete('/detailtoponim/delete/:datatoponim_id', detailtoponimController.delete);
 

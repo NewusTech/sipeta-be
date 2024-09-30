@@ -40,8 +40,16 @@ module.exports = {
       {
         userinfo_id: 5,
         password: passwordHash.generate('123456'),
-        slug: "Newus-20240620041615213",
+        slug: "Surveyor-20240620041615213",
         role_id: 5,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        userinfo_id: 6,
+        password: passwordHash.generate('123456'),
+        slug: "Newus-20240620041615213",
+        role_id: 6,
         createdAt: new Date(),
         updatedAt: new Date()
       },
