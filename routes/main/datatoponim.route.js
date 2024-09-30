@@ -22,5 +22,8 @@ route.delete('/datatoponim/delete/:id', [mid.checkRolesAndLogout(['Super Admin',
 
 route.get('/datatoponim/pdf', [mid.checkRoles()], datatoponimController.pdf);
 route.get('/datatoponim/excel', [mid.checkRoles()], datatoponimController.excel);
+route.get('/datatoponim/csv', [mid.checkRoles()], datatoponimController.csv);
+route.get('/datatoponim/json', [mid.checkRoles()], datatoponimController.json);
+route.get('/datatoponim/shp', [mid.checkRoles()], datatoponimController.shp);
 
 module.exports = route;
