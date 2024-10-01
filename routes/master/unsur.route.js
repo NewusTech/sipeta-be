@@ -10,10 +10,10 @@ const mid = require('../../middlewares/auth.middleware');
 const express = require('express');
 const route = express.Router();
 
-route.post('/unsur/create', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], unsurController.input);
+route.post('/unsur/create', [mid.checkRolesAndLogout(['Super Admin', 'Verifikator'])], unsurController.input);
 route.get('/unsur/get', unsurController.get); 
 route.get('/unsur/get/:id', unsurController.getbyid); 
-route.put('/unsur/update/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], unsurController.update); 
-route.delete('/unsur/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kabag', 'Verifikasi', 'Admin', 'User'])], unsurController.delete);
+route.put('/unsur/update/:id', [mid.checkRolesAndLogout(['Super Admin', 'Verifikator'])], unsurController.update); 
+route.delete('/unsur/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'Verifikator'])], unsurController.delete);
 
 module.exports = route;

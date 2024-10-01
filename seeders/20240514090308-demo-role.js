@@ -9,17 +9,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        name: 'Kabag',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        name: 'Verifikasi',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        name: 'Admin',
+        name: 'Verifikator',
         createdAt: new Date(),
         updatedAt: new Date()
       },
