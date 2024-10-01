@@ -11,23 +11,9 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        name: 'Kabag',
-        nik: 'Kabag',
-        slug: "Kabag-20240620041615213",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        name: 'Verifikasi',
-        nik: 'Verifikasi',
-        slug: "Verifikasi-20240620041615213",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        name: 'Admin',
-        nik: 'Admin',
-        slug: "Admin-20240620041615213",
+        name: 'Verifikator',
+        nik: 'Verifikator',
+        slug: "Verifikator-20240620041615213",
         createdAt: new Date(),
         updatedAt: new Date()
       },
