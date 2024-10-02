@@ -1,6 +1,6 @@
 const { response } = require('../../helpers/response.formatter');
 
-const { Mapslampura } = require('../../models');
+const { Mapslampura, User } = require('../../models');
 
 const Validator = require("fastest-validator");
 const v = new Validator();
@@ -25,7 +25,6 @@ const s3Client = new S3Client({
 
 module.exports = {
 
-    //mendapatkan data mapslampura berdasarkan id
     getmapslampura: async (req, res) => {
         try {
             //mendapatkan data mapslampura berdasarkan id
@@ -45,7 +44,6 @@ module.exports = {
         }
     },
 
-    //mengupdate mapslampura berdasarkan id
     updatemapslampura: async (req, res) => {
         try {
             // Mendapatkan data mapslampura untuk pengecekan
@@ -77,7 +75,7 @@ module.exports = {
                     mimetype: req.file.mimetype,
                     uniqueFileName,
                     folderPath: `${process.env.PATH_AWS}/mapslampura`
-                }), 'EX', 60 * 60); // Expire in 1 hour
+                }), 'EX', 60 * 60); 
     
                 mapslampuraKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.PATH_AWS}/mapslampura/${uniqueFileName}`;
             }
@@ -133,6 +131,55 @@ module.exports = {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
-    },    
+    },
+
+    updatecountmapslampura: async () => {
+        try {
+            let mapslampuraGet = await Mapslampura.findOne();
+    
+            if (!mapslampuraGet) {
+                res.status(404).json(response(404, 'mapslampura not found'));
+                return;
+            }
+
+            const [count_surveyor, count_kontributor] = await Promise.all([
+                User.count({
+                    where: {
+                        role_id: 3,
+                        deletedAt: null
+                    },
+                }),
+                User.count({
+                    where: {
+                        role_id: 4,
+                        deletedAt: null
+                    },
+                })
+            ]);
+    
+            // Buat object mapslampura
+            let mapslampuraUpdateObj = {
+                count_surveyor: count_surveyor,
+                count_kontributor: count_kontributor,
+            };
+    
+            // Update mapslampura
+            await Mapslampura.update(mapslampuraUpdateObj, {
+                where: {
+                    id: mapslampuraGet.id,
+                },
+            });
+    
+            // Mendapatkan data mapslampura setelah update
+            let mapslampuraAfterUpdate = await Mapslampura.findOne();
+    
+            // Response menggunakan helper response.formatter
+            return mapslampuraAfterUpdate;
+    
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
 
 }

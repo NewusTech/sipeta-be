@@ -18,6 +18,8 @@ module.exports = (sequelize, DataTypes) => {
     alamat: DataTypes.STRING,
     camat: DataTypes.STRING,
     telp: DataTypes.STRING,
+    count_surveyor: DataTypes.INTEGER,
+    count_kontributor: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Kecamatan',
