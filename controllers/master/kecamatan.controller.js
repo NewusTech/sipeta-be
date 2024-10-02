@@ -1,6 +1,6 @@
 const { response } = require('../../helpers/response.formatter');
 
-const { Desa, Kecamatan, sequelize } = require('../../models');
+const { Desa, Kecamatan, User, Userinfo, sequelize } = require('../../models');
 const { generatePagination } = require('../../pagination/pagination');
 const Validator = require("fastest-validator");
 const v = new Validator();
@@ -102,7 +102,6 @@ module.exports = {
         }
     },
     
-
     getById: async (req, res) => {
         try {
 
@@ -187,4 +186,85 @@ module.exports = {
             }
         }
     },
+
+    updatecountkecamatan: async () => {
+        try {
+            // Ambil semua kecamatan
+            let kecamatanlampuraGet = await Kecamatan.findAll();
+    
+            if (!kecamatanlampuraGet || kecamatanlampuraGet.length === 0) {
+                throw new Error('Kecamatan Lampura not found');
+            }
+    
+            // Menyimpan hasil update untuk dikembalikan
+            let updatedKecamatan = [];
+    
+            // Loop melalui setiap kecamatan dan hitung jumlah surveyor & kontributor berdasarkan kecamatan_id
+            for (let kecamatan of kecamatanlampuraGet) {
+                console.log("kecamatan", kecamatan.id);
+                const [count_surveyor, count_kontributor] = await Promise.all([
+                    User.count({
+                        where: {
+                            role_id: 3,
+                            deletedAt: null
+                        },
+                        include: [
+                            {
+                                model: Userinfo,
+                                where: {
+                                    kecamatan_id: kecamatan.id,
+                                    deletedAt: null
+                                }
+                            },
+                        ],
+                    }),
+                    User.count({
+                        where: {
+                            role_id: 4,
+                            deletedAt: null
+                        },
+                        include: [
+                            {
+                                model: Userinfo,
+                                where: {
+                                    kecamatan_id: kecamatan.id,
+                                    deletedAt: null
+                                }
+                            },
+                        ],
+                    })
+                ]);
+    
+                // Update data kecamatan dengan count_surveyor dan count_kontributor
+                await Kecamatan.update(
+                    {
+                        count_surveyor: count_surveyor,
+                        count_kontributor: count_kontributor,
+                    },
+                    {
+                        where: {
+                            id: kecamatan.id,
+                        },
+                    }
+                );
+    
+                // Menyimpan hasil update dalam array
+                updatedKecamatan.push({
+                    kecamatan_id: kecamatan.id,
+                    count_surveyor,
+                    count_kontributor
+                });
+            }
+    
+            // Kembalikan hasil pembaruan kecamatan
+            return updatedKecamatan;
+    
+        } catch (err) {
+            // Menangani error
+            console.log(err);
+            throw err;
+        }
+    }
+    
+    
 }

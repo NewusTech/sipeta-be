@@ -1,5 +1,7 @@
 const { response } = require('../../helpers/response.formatter');
 
+const countController = require('./mapslampura.controller');
+const countController2 = require('./kecamatan.controller');
 const { User, Token, Role, Userinfo, Kecamatan, Desa, Userpermission, Permission, sequelize } = require('../../models');
 const baseConfig = require('../../config/base.config');
 const passwordHash = require('password-hash');
@@ -93,7 +95,6 @@ module.exports = {
             // Membuat entri baru di tabel userinfo
             let userinfoCreate = await Userinfo.create(userinfoCreateObj);
 
-            // Membuat object untuk create user
             let userCreateObj = {
                 password: passwordHash.generate(req.body.password),
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
@@ -101,15 +102,22 @@ module.exports = {
                 slug: slug
             };
 
-            // Membuat user baru
             let userCreate = await User.create(userCreateObj);
 
-            // Mengirim response dengan bantuan helper response.formatter
+            await Promise.all([
+                countController.updatecountmapslampura(),
+                countController2.updatecountkecamatan()
+            ]);
+
             await transaction.commit();
+
             res.status(201).json(response(201, 'user created', userCreate));
 
         } catch (err) {
-            await transaction.rollback();
+            if (!transaction.finished) {
+                await transaction.rollback();
+            }
+
             if (err.name === 'SequelizeUniqueConstraintError') {
                 // Menangani error khusus untuk constraint unik
                 res.status(400).json({
@@ -499,6 +507,11 @@ module.exports = {
                     slug: req.params.slug
                 }
             });
+
+            await Promise.all([
+                countController.updatecountmapslampura(),
+                countController2.updatecountkecamatan()
+            ]);
 
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success delete user'));

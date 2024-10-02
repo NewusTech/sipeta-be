@@ -1,7 +1,8 @@
 const { response } = require('../../helpers/response.formatter');
 
 const { User, Userinfo, Kecamatan, Desa, Role, sequelize } = require('../../models');
-
+const countController = require('./mapslampura.controller');
+const countController2 = require('./kecamatan.controller');
 const passwordHash = require('password-hash');
 const Validator = require("fastest-validator");
 const v = new Validator();
@@ -340,13 +341,18 @@ module.exports = {
             // Membuat object untuk create user
             let userCreateObj = {
                 password: passwordHash.generate(generatedPassword),
-                role_id: 1,
+                role_id: req.body.role_id ?? null,
                 userinfo_id: userinfoCreate.id,
                 slug: slug
             };
 
             // Membuat user baru
             await User.create(userCreateObj);
+
+            await Promise.all([
+                countController.updatecountmapslampura(),
+                countController2.updatecountkecamatan()
+            ]);
 
             await transaction.commit();
             res.status(200).json(response(200, 'success create userinfo', userinfoCreate));
@@ -529,6 +535,11 @@ module.exports = {
                 },
                 transaction
             });
+
+            await Promise.all([
+                countController.updatecountmapslampura(),
+                countController2.updatecountkecamatan()
+            ]);
 
             await transaction.commit();
 

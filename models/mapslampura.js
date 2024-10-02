@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   Mapslampura.init({
     file: DataTypes.STRING,
+    count_surveyor: DataTypes.INTEGER,
+    count_kontributor: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Mapslampura',

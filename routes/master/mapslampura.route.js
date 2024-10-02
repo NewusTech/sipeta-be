@@ -11,6 +11,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
  
 route.get('/mapslampura/get', mapslampuraController.getmapslampura); 
-route.put('/mapslampura/update', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), mapslampuraController.updatemapslampura); 
+route.put('/mapslampura/update', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), mapslampuraController.updatemapslampura);
 
 module.exports = route;
