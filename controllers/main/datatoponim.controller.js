@@ -22,11 +22,26 @@ const schema = {
     koordinat: { type: "string", convert: true, optional: true },
     bujur: { type: "string", convert: true, optional: true },
     lintang: { type: "string", convert: true, optional: true },
-    kecamatan_id: { type: "string", convert: true, optional: true },
-    desa_id: { type: "string", convert: true, optional: true },
+    kecamatan: { type: "string", optional: true },
+    desa: { type: "string", optional: true },
     status: { type: "string", convert: true, optional: true },
     verifiednotes: { type: "string", optional: true },
     verifiedat: { type: "string", optional: true },
+};
+
+const getKecamatanId = async (kecamatanName) => {
+    // Mengabaikan kata "Kecamatan" jika ada
+    const formattedKecamatanName = kecamatanName.replace(/Kecamatan\s*/, '');
+    const kecamatan = await Kecamatan.findOne({ where: { name: formattedKecamatanName } });
+    return kecamatan ? kecamatan.id : null;
+};
+
+// Helper function untuk mendapatkan ID Desa dari nama
+const getDesaId = async (desaName) => {
+    // Mengabaikan kata "Kelurahan" jika ada
+    const formattedDesaName = desaName.replace(/Kelurahan\s*/, '');
+    const desa = await Desa.findOne({ where: { name: formattedDesaName } });
+    return desa ? desa.id : null;
 };
 
 module.exports = {
@@ -142,6 +157,9 @@ module.exports = {
                 toponimCreateObj.verifiedat = new Date().toISOString();
             }
 
+            if (req?.body?.kecamatan) toponimCreateObj.kecamatan_id = await getKecamatanId(req?.body?.kecamatan)
+            if (req?.body?.desa) toponimCreateObj.desa_id = await getDesaId(req?.body?.desa) 
+
             const validate = v.validate(toponimCreateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
@@ -172,6 +190,9 @@ module.exports = {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
+
+            if (req?.body?.kecamatan) toponimUpdateObj.kecamatan_id = await getKecamatanId(req?.body?.kecamatan)
+            if (req?.body?.desa) toponimUpdateObj.desa_id = await getDesaId(req?.body?.desa) 
 
             const toponim = await Datatoponim.findByPk(id);
             if (!toponim) {
