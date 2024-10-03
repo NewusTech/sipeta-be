@@ -29,5 +29,7 @@ route.get('/datatoponim/json', [mid.checkRoles()], datatoponimController.json);
 route.get('/datatoponim/shp', [mid.checkRoles()], datatoponimController.shp);
 
 route.post('/datatoponim/import-json', [mid.checkRoles()], upload.single('file'), importtoponimController.importJson);
+route.post('/datatoponim/import-excel', [mid.checkRoles()], upload.single('file'), importtoponimController.importExcel);
+route.post('/datatoponim/import-csv', [mid.checkRoles()], upload.single('file'), importtoponimController.importCsv);
 
 module.exports = route;
