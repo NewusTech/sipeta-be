@@ -391,11 +391,11 @@ module.exports = {
             const exportData = dataGets.map(item => ({
                 Tanggal: new Date(item?.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
                 Status: item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi',
-                ID_Toponim: item.id_toponim,
-                Nama_Tempat: item.nama_lokal,
-                Kecamatan: item.Kecamatan.name,
-                Desa: item.Desa.name,
-                Keterangan: item.verifiednotes || '-'
+                ID_Toponim: item?.id_toponim,
+                Nama_Tempat: item?.nama_lokal,
+                Kecamatan: item?.Kecamatan?.name,
+                Desa: item?.Desa?.name,
+                Keterangan: item?.verifiednotes || '-'
             }));
 
             const workbook = new ExcelJS.Workbook();
@@ -496,7 +496,7 @@ module.exports = {
             });
 
             const exportData = dataGets.map(item => [
-                `"${new Date(item?.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}","${item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi'}","${item.id_toponim}","${item.nama_lokal}","${item.Kecamatan.name}","${item.Desa.name}","${item.verifiednotes || '-'}"`
+                `"${new Date(item?.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}","${item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi'}","${item?.id_toponim}","${item?.nama_lokal ?? ''}","${item?.Kecamatan?.name ?? ''}","${item?.Desa?.name ?? ''}","${item?.verifiednotes || '-'}"`
             ]);
 
             const workbook = new ExcelJS.Workbook();
@@ -682,14 +682,14 @@ module.exports = {
                 type: 'Feature',
                 properties: {
                     statpub: "Terbit",
-                    status: item.status === 1 ? "Diterima" : "Ditolak",
-                    id_toponim: item.id_toponim,
-                    klasifikasi: item.Klasifikasi.name,
-                    unsur: item.Unsur.name,
-                    nama_lokal: item.nama_lokal,
-                    nama_spesifik: item.nama_spesifik,
-                    nama_peta: item.nama_peta,
-                    koordinat1: item.koordinat1,
+                    status: item?.status === 1 ? "Diterima" : "Ditolak",
+                    id_toponim: item?.id_toponim,
+                    klasifikasi: item?.Klasifikasi.name,
+                    unsur: item?.Unsur.name,
+                    nama_lokal: item?.nama_lokal,
+                    nama_spesifik: item?.nama_spesifik,
+                    nama_peta: item?.nama_peta,
+                    koordinat1: item?.koordinat1,
                     remark: "RDTR BWP Simpang Empat - Batulicin"
                 },
                 geometry: {

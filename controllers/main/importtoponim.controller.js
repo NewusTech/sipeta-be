@@ -4,6 +4,7 @@ const path = require('path');
 const ExcelJS = require('exceljs');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
+const shapefile = require('shapefile');
 
 const getKlasifikasiId = async (klasifikasiName) => {
     const klasifikasi = await Klasifikasi.findOne({ where: { name: klasifikasiName } });
@@ -331,6 +332,111 @@ module.exports = {
                 });
         } catch (error) {
             console.error('Error importing data: ', error.message);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    },
+
+    importShp: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded' });
+            }
+    
+            // Membaca file SHP dari buffer
+            const buffer = req.file.buffer;
+    
+            // Buka file SHP
+            const source = await shapefile.open(buffer);
+    
+            // Baca setiap fitur di file SHP
+            let result = await source.read();
+
+            console.log(result.value)
+            while (!result.done) {
+                const properties = result.value.properties;
+                const geometry = result.value.geometry;
+    
+                // Proses setiap feature
+                const newDatatoponim = {
+                    statpub: checkEmpty(properties['Status Publikasi']),
+                    statpem: checkEmpty(properties['Status Pembakuan']),
+                    id_toponim: checkEmpty(properties['Id Toponim']),
+                    nama_lokal: checkEmpty(properties['Nama Lokal']),
+                    nama_spesifik: checkEmpty(properties['Nama Spesifik']),
+                    nama_lain: checkEmpty(properties['Nama Lain']),
+                    asal_bahasa: checkEmpty(properties['Asal Bahasa']),
+                    arti_nama: checkEmpty(properties['Arti Nama']),
+                    sejarah_nama: checkEmpty(properties['Sejarah Nama']),
+                    nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']),
+                    nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']),
+                    ucapan: checkEmpty(properties['Ucapan']),
+                    ejaan: checkEmpty(properties['Ejaan']),
+                    nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']),
+                    akurasi: checkEmpty(properties['Akurasi']),
+                    negara: checkEmpty(properties['Negara']),
+                    provinsi: checkEmpty(properties['Provinsi']),
+                    kabupaten: checkEmpty(properties['Kabupaten / Kota']),
+                    verifiedat: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']).toISOString() : null,
+                    status: properties['Status Data'] === 'Proses' ? 0 : 1,
+                    createdAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
+                    updatedAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
+                    // kecamatan_id: await getKecamatanId(properties['Kecamatan']),
+                    // desa_id: await getDesaId(properties['Desa / Kelurahan']),
+                    tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
+                };
+    
+                let DataToponimsave = await Datatoponim.create(newDatatoponim);
+    
+                // Mengelola foto toponim
+                const fotoUrls = [
+                    checkEmpty(properties['foto1']),
+                    checkEmpty(properties['foto2']),
+                    checkEmpty(properties['foto3']),
+                    checkEmpty(properties['foto4']),
+                ];
+                for (const fotoUrl of fotoUrls) {
+                    if (fotoUrl) {
+                        const newFotoToponim = {
+                            datatoponim_id: DataToponimsave.id,
+                            foto_url: fotoUrl,
+                        };
+                        await Fototoponim.create(newFotoToponim);
+                    }
+                }
+    
+                // Mengelola detail toponim
+                const newDetailtoponim = {
+                    datatoponim_id: DataToponimsave.id,
+                    zona_utm: checkEmpty(properties['NLP']),
+                    nlp: checkEmpty(properties['NLP']),
+                    klstpn: checkEmpty(properties['Unsur']),
+                    lcode: checkEmpty(properties['Unsur']),
+                    nama_gazeter: checkEmpty(properties['Nama Lokal']),
+                    nama_lain: checkEmpty(properties['Nama Lain']),
+                    asal_bahasa: checkEmpty(properties['Asal Bahasa']),
+                    arti_nama: checkEmpty(properties['Arti Nama']),
+                    sejarah_nama: checkEmpty(properties['Sejarah Nama']),
+                    nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']),
+                    nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']),
+                    ucapan: checkEmpty(properties['Ucapan']),
+                    ejaan: checkEmpty(properties['Ejaan']),
+                    nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']),
+                    akurasi: checkEmpty(properties['Akurasi']),
+                    narasumber: checkEmpty(properties['Narasumber']),
+                    sumber_data: checkEmpty(properties['Sumber Data']),
+                    createdAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
+                    updatedAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
+                };
+    
+                await Detailtoponim.create(newDetailtoponim);
+    
+                // Membaca fitur berikutnya
+                result = await source.read();
+            }
+    
+            res.status(201).json({ message: 'Import successful!' });
+        } catch (error) {
+            console.error('Error processing SHP: ', error.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
