@@ -9,7 +9,6 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
-const shpwrite = require('shp-write');
 
 const getKlasifikasiId = async (klasifikasiName) => {
     const klasifikasi = await Klasifikasi.findOne({ where: { name: klasifikasiName } });
@@ -55,88 +54,6 @@ const saveFototoponim = async (datatoponimId, properties) => {
 
 module.exports = {
 
-    // importJson: async (req, res) => {
-    //     try {
-    //         if (!req.file) {
-    //             return res.status(400).json({ message: 'No file uploaded' });
-    //         }
-
-    //         // Membaca data JSON dari buffer
-    //         const jsonData = JSON.parse(req.file.buffer.toString());
-
-    //         // Proses data JSON untuk menyimpannya ke database
-    //         for (const feature of jsonData.features) {
-    //             const properties = feature?.properties;
-    //             const geometry = feature?.geometry;
-
-    //             const newDatatoponim = {
-    //                 statpub: properties?.statpub,
-    //                 statpem: properties?.statpem,
-    //                 id_toponim: properties?.id_toponim,
-    //                 nama_lokal: properties?.namlok,
-    //                 nama_spesifik: properties?.namspe,
-    //                 nama_peta: properties?.nammap,
-    //                 tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
-    //                 klasifikasi_id: await getKlasifikasiId(properties?.klstpn),
-    //                 unsur_id: properties?.id_unsur,
-    //                 koordinat: properties?.koordinat1,
-    //                 bujur: properties?.koordx,
-    //                 lintang: properties?.koordy,
-    //                 kecamatan_id: await getKecamatanId(properties?.wadmkc),
-    //                 desa_id: await getDesaId(properties?.wadmkd),
-    //                 sketsa: properties?.sketsa,
-    //                 docpendukung: properties?.docpendukung,
-    //                 status: properties.status === 'Proses' ? 0 : 1,
-    //                 verifiedat: properties.status !== 'Proses' ? properties.tglsurvei || new Date().toISOString() : null,
-    //                 verifiednoted: properties?.verifiednoted,
-    //                 createdAt: properties.tglsurvei,
-    //                 updatedAt: properties.tglsurvei,
-    //             };
-
-    //             let DataToponimsave = await Datatoponim.create(newDatatoponim);
-
-    //             const newDetailtoponim = {
-    //                 datatoponim_id: DataToponimsave.id,
-    //                 zona_utm: properties.zonautm,
-    //                 nlp: properties.nlp,
-    //                 klstpn: properties.klstpn,
-    //                 lcode: properties.lcode,
-    //                 nama_gazeter: properties.namgaz,
-    //                 nama_lain: properties.alias,
-    //                 asal_bahasa: properties.aslbhs,
-    //                 arti_nama: properties.artinam,
-    //                 sejarah_nama: properties.sjhnam,
-    //                 nama_sebelumnya: properties.nambef,
-    //                 nama_rekomendasi: properties.namrec,
-    //                 ucapan: properties.ucapan,
-    //                 ejaan: properties.ejaan,
-    //                 nilai_ketinggian: properties.elevasi,
-    //                 akurasi: properties.akurasi,
-    //                 narasumber: properties.narsum,
-    //                 sumber_data: properties.sumber,
-    //                 createdAt: properties.tglsurvei,
-    //                 updatedAt: properties.tglsurvei,
-    //             };
-
-    //             const newFotoToponim = {
-    //                 datatoponim_id: DataToponimsave.id,
-    //                 foto_url: properties.foto1,
-    //                 foto2: properties.foto2,
-    //                 foto3: properties.foto3,
-    //                 foto4: properties.foto4      
-    //             };
-
-    //             await Detailtoponim.create(newDetailtoponim);
-    //             await Fototoponim.create(newFotoToponim);
-    //         }
-
-    //         res.status(201).json({ message: 'Import successful!' });
-    //     } catch (error) {
-    //         console.error('Error importing data: ', error.message);
-    //         res.status(500).json({ message: 'Internal server error' });
-    //     }
-    // }
-
     importJson: async (req, res) => {
         try {
             if (!req.file) {
@@ -154,26 +71,22 @@ module.exports = {
             const kecamatanCache = {};
             const desaCache = {};
 
-            // Proses data JSON untuk menyimpannya ke database
             for (const feature of jsonData.features) {
                 const properties = feature?.properties;
                 const geometry = feature?.geometry;
 
-                // Klasifikasi caching to avoid duplicate DB lookups
                 let klasifikasi_id = klasifikasiCache[properties?.klstpn];
                 if (!klasifikasi_id) {
                     klasifikasi_id = await getKlasifikasiId(properties?.klstpn);
                     klasifikasiCache[properties?.klstpn] = klasifikasi_id;
                 }
 
-                // Kecamatan caching to avoid duplicate DB lookups
                 let kecamatan_id = kecamatanCache[properties?.wadmkc];
                 if (!kecamatan_id) {
                     kecamatan_id = await getKecamatanId(properties?.wadmkc);
                     kecamatanCache[properties?.wadmkc] = kecamatan_id;
                 }
 
-                // Desa caching to avoid duplicate DB lookups
                 let desa_id = desaCache[properties?.wadmkd];
                 if (!desa_id) {
                     desa_id = await getDesaId(properties?.wadmkd);
@@ -242,6 +155,104 @@ module.exports = {
             console.error('Error importing data: ', error.message);
             res.status(500).json({ message: 'Internal server error' });
         }
-    }
+    },
+
+    importExcel: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded' });
+            }
+    
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(req.file.buffer);
+            const worksheet = workbook.worksheets[0]; // Assumes data is in the first sheet
+    
+            // Process each row in the worksheet
+            const promises = [];
+            worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+                if (rowNumber === 1) return; // Skip header row
+    
+                const properties = {
+                    // statpub: row.getCell(1).value,  // Adjust column indexes based on your Excel structure
+                    // statpem: row.getCell(2).value,
+                    status: row.getCell(2).value,
+                    namlok: row.getCell(4).value,
+                    namspe: row.getCell(5).value,
+                    id_toponim: row.getCell(8).value,
+                    // nammap: row.getCell(6).value,
+                    // koordx: row.getCell(7).value,
+                    // koordy: row.getCell(8).value,
+                    // wadmkc: row.getCell(9).value,
+                    // wadmkd: row.getCell(10).value,
+                    // sketsa: row.getCell(11).value,
+                    // docpendukung: row.getCell(12).value,
+                    // tglsurvei: row.getCell(14).value,
+                    // foto1: row.getCell(15).value,
+                    // foto2: row.getCell(16).value,
+                    // foto3: row.getCell(17).value,
+                    // foto4: row.getCell(18).value,
+                    // klstpn: row.getCell(19).value,
+                    // id_unsur: row.getCell(20).value,
+                    // zonautm: row.getCell(21).value
+                    // Add more fields as necessary
+                };
+
+                console.log(properties)
+    
+                const newDatatoponim = {
+                    statpub: properties.statpub,
+                    statpem: properties.statpem,
+                    id_toponim: properties.id_toponim,
+                    nama_lokal: properties.namlok,
+                    nama_spesifik: properties.namspe,
+                    nama_peta: properties.nammap,
+                    bujur: properties.koordx,
+                    lintang: properties.koordy,
+                    kecamatan_id: properties.wadmkc ? await getKecamatanId(properties.wadmkc) : null,
+                    desa_id: properties.wadmkd ? await getDesaId(properties.wadmkd) : null,
+                    sketsa: properties.sketsa,
+                    docpendukung: properties.docpendukung,
+                    status: properties.status === 'Proses' ? 0 : 1,
+                    verifiedat: properties.status !== 'Proses' ? properties.tglsurvei || new Date().toISOString() : null,
+                    createdAt: properties.tglsurvei,
+                    updatedAt: properties.tglsurvei,
+                };
+    
+                const DataToponimsave = await Datatoponim.create(newDatatoponim);
+    
+                // Handle Foto Toponim
+                for (let i = 1; i <= 4; i++) {
+                    const fotoUrl = properties[`foto${i}`];
+                    if (fotoUrl) {
+                        const newFotoToponim = {
+                            datatoponim_id: DataToponimsave.id,
+                            foto_url: fotoUrl,
+                        };
+                        await Fototoponim.create(newFotoToponim);
+                    }
+                }
+    
+                // Handle Detail Toponim
+                const newDetailtoponim = {
+                    datatoponim_id: DataToponimsave.id,
+                    zona_utm: properties.zonautm,
+                    klstpn: properties.klstpn,
+                    id_unsur: properties.id_unsur,
+                    createdAt: properties.tglsurvei,
+                    updatedAt: properties.tglsurvei,
+                };
+    
+                await Detailtoponim.create(newDetailtoponim);
+            });
+    
+            // Wait for all promises to finish
+            await Promise.all(promises);
+    
+            res.status(201).json({ message: 'Import successful!' });
+        } catch (error) {
+            console.error('Error importing data: ', error.message);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    },
 
 }
