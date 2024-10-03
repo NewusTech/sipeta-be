@@ -1,11 +1,4 @@
-const { response } = require('../../helpers/response.formatter');
-
 const { Datatoponim, Detailtoponim, Desa, Kecamatan, Unsur, Klasifikasi, Fototoponim, sequelize } = require('../../models');
-const { generatePagination } = require('../../pagination/pagination');
-const Validator = require("fastest-validator");
-const v = new Validator();
-const { Op } = require('sequelize');
-const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
@@ -17,22 +10,18 @@ const getKlasifikasiId = async (klasifikasiName) => {
     return klasifikasi ? klasifikasi.id : null;
 };
 
-// Helper function untuk mendapatkan ID Unsur dari nama
 const getUnsurId = async (unsurName) => {
     const unsur = await Unsur.findOne({ where: { name: unsurName } });
     return unsur ? unsur.id : null;
 };
 
 const getKecamatanId = async (kecamatanName) => {
-    // Mengabaikan kata "Kecamatan" jika ada
     const formattedKecamatanName = kecamatanName.replace(/Kecamatan\s*/, '');
     const kecamatan = await Kecamatan.findOne({ where: { name: formattedKecamatanName } });
     return kecamatan ? kecamatan.id : null;
 };
 
-// Helper function untuk mendapatkan ID Desa dari nama
 const getDesaId = async (desaName) => {
-    // Mengabaikan kata "Kelurahan" jika ada
     const formattedDesaName = desaName.replace(/Kelurahan\s*/, '');
     const desa = await Desa.findOne({ where: { name: formattedDesaName } });
     return desa ? desa.id : null;
@@ -43,17 +32,15 @@ const checkEmpty = (value) => {
 };
 
 const saveFototoponim = async (datatoponimId, properties) => {
-    // Array untuk menyimpan semua foto yang ada
     const fotoUrls = [properties.foto1, properties.foto2, properties.foto3, properties.foto4];
 
-    // Loop untuk menyimpan setiap foto jika ada
     for (const fotoUrl of fotoUrls) {
         if (fotoUrl) {
             const newFotoToponim = {
                 datatoponim_id: datatoponimId,
                 foto_url: fotoUrl,
             };
-            await Fototoponim.create(newFotoToponim); // Simpan foto ke database
+            await Fototoponim.create(newFotoToponim);
         }
     }
 };
@@ -347,5 +334,6 @@ module.exports = {
             res.status(500).json({ message: 'Internal server error' });
         }
     }
+
 
 }
