@@ -9,6 +9,8 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
+const csv = require('csv-parser');
+const { Readable } = require('stream');
 
 const getKlasifikasiId = async (klasifikasiName) => {
     const klasifikasi = await Klasifikasi.findOne({ where: { name: klasifikasiName } });
@@ -34,6 +36,10 @@ const getDesaId = async (desaName) => {
     const formattedDesaName = desaName.replace(/Kelurahan\s*/, '');
     const desa = await Desa.findOne({ where: { name: formattedDesaName } });
     return desa ? desa.id : null;
+};
+
+const checkEmpty = (value) => {
+    return value === "" ? null : value;
 };
 
 const saveFototoponim = async (datatoponimId, properties) => {
@@ -254,5 +260,92 @@ module.exports = {
             res.status(500).json({ message: 'Internal server error' });
         }
     },
+
+    importCsv: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded' });
+            }
+    
+            const results = [];
+            const readable = new Readable();
+            readable.push(req.file.buffer);
+            readable.push(null);
+    
+            readable
+                .pipe(csv())
+                .on('data', (data) => {
+                    results.push(data);
+                })
+                .on('end', async () => {
+                    // Proses data untuk menyimpannya ke database
+                    for (const properties of results) {
+                        const newDatatoponim = {
+                            statpub: checkEmpty(properties['Status Publikasi']) ?? null,
+                            statpem: checkEmpty(properties['Status Pembakuan']) ?? null,
+                            status: properties['Status Data'] === 'Proses' ? 0 : 1,
+                            id_toponim: checkEmpty(properties['Id Toponim']) ?? null,
+                            unsur_id: await getUnsurId(properties['Unsur']) ?? null,
+                            nama_lokal: checkEmpty(properties['Nama Lokal']) ?? null,
+                            nama_spesifik: checkEmpty(properties['Nama Spesifik']) ?? null,
+                            kecamatan_id: properties['Kecamatan'] ? await getKecamatanId(properties['Kecamatan']) : null,
+                            desa_id: properties['Desa / Kelurahan'] ? await getDesaId(properties['Desa / Kelurahan']) : null,
+                            nama_surveyor: properties['Nama Surveyor'] ?? null,
+                            narasumber: properties['Narasumber'] ?? null,
+                            verifiedat: properties['Status Data'] !== 'Proses' ? properties['Tanggal Survei'] || new Date().toISOString() : null, 
+                        };
+    
+                        // Simpan data toponim ke database
+                        let DataToponimsave = await Datatoponim.create(newDatatoponim);
+    
+                        // Simpan foto jika ada
+                        const fotoUrls = [
+                            checkEmpty(properties['foto1']),
+                            checkEmpty(properties['foto2']),
+                            checkEmpty(properties['foto3']),
+                            checkEmpty(properties['foto4']),
+                        ];
+                        for (const fotoUrl of fotoUrls) {
+                            if (fotoUrl) {
+                                const newFotoToponim = {
+                                    datatoponim_id: DataToponimsave.id,
+                                    foto_url: fotoUrl,
+                                };
+                                await Fototoponim.create(newFotoToponim);
+                            }
+                        }
+    
+                        // Simpan detail toponim
+                        const newDetailtoponim = {
+                            datatoponim_id: DataToponimsave.id,
+                            zona_utm: checkEmpty(properties['Zona UTM']) ?? null,
+                            nlp: checkEmpty(properties['NLP']) ?? null,
+                            nama_lain: checkEmpty(properties['Nama Lain']) ?? null,
+                            asal_bahasa: checkEmpty(properties['Asal Bahasa']) ?? null,
+                            arti_nama: checkEmpty(properties['Arti Nama']) ?? null,
+                            sejarah_nama: checkEmpty(properties['Sejarah Nama']) ?? null,
+                            nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']) ?? null,
+                            nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']) ?? null,
+                            ucapan: checkEmpty(properties['Ucapan']) ?? null,
+                            ejaan: checkEmpty(properties['Ejaan']) ?? null,
+                            nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']) ?? null,
+                            akurasi: checkEmpty(properties['Akurasi']) ?? null,
+                            narasumber: checkEmpty(properties['Narasumber']) ?? null,
+                            sumber_data: checkEmpty(properties['Sumber Data']) ?? null,
+                            createdAt: checkEmpty(properties['Tanggal Survei']) ?? null,
+                            updatedAt: checkEmpty(properties['Tanggal Survei']) ?? null,
+                            catatan: checkEmpty(properties['Catatan']) ?? null,
+                        };
+    
+                        await Detailtoponim.create(newDetailtoponim);
+                    }
+    
+                    res.status(201).json({ message: 'Import successful!' });
+                });
+        } catch (error) {
+            console.error('Error importing data: ', error.message);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    }
 
 }
