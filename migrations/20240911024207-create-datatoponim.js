@@ -54,6 +54,18 @@ module.exports = {
       status: {
         type: Sequelize.SMALLINT
       },
+      kepala: {
+        type: Sequelize.STRING
+      },
+      sekretaris: {
+        type: Sequelize.STRING
+      },
+      telp: {
+        type: Sequelize.STRING
+      },
+      email: {
+        type: Sequelize.STRING
+      },
       verifiednotes: {
         type: Sequelize.TEXT,
       },

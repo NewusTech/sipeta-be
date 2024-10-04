@@ -338,108 +338,105 @@ module.exports = {
 
     importShp: async (req, res) => {
         try {
-            if (!req.file) {
-                return res.status(400).json({ message: 'No file uploaded' });
+            if (!req.files || !req.files.shp || !req.files.dbf || !req.files.shx) {
+                return res.status(400).json({ message: 'Missing one of the required files: .shp, .dbf, or .shx' });
             }
     
-            // Membaca file SHP dari buffer
-            const buffer = req.file.buffer;
+            // Membaca file dari buffer
+            const shpBuffer = req.files.shp[0].buffer;
+            const shxBuffer = req.files.shx[0].buffer;
+            const dbfBuffer = req.files.dbf[0].buffer;
     
-            // Buka file SHP
-            const source = await shapefile.open(buffer);
+            // Membuka shapefile
+            const source = await shapefile.open(shpBuffer, shxBuffer, dbfBuffer);
     
-            // Baca setiap fitur di file SHP
             let result = await source.read();
-
-            console.log(result.value)
             while (!result.done) {
-                const properties = result.value.properties;
-                const geometry = result.value.geometry;
+                const feature = result.value;
+                const properties = feature?.properties;
+                const geometry = feature?.geometry;
     
-                // Proses setiap feature
-                const newDatatoponim = {
-                    statpub: checkEmpty(properties['Status Publikasi']),
-                    statpem: checkEmpty(properties['Status Pembakuan']),
-                    id_toponim: checkEmpty(properties['Id Toponim']),
-                    nama_lokal: checkEmpty(properties['Nama Lokal']),
-                    nama_spesifik: checkEmpty(properties['Nama Spesifik']),
-                    nama_lain: checkEmpty(properties['Nama Lain']),
-                    asal_bahasa: checkEmpty(properties['Asal Bahasa']),
-                    arti_nama: checkEmpty(properties['Arti Nama']),
-                    sejarah_nama: checkEmpty(properties['Sejarah Nama']),
-                    nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']),
-                    nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']),
-                    ucapan: checkEmpty(properties['Ucapan']),
-                    ejaan: checkEmpty(properties['Ejaan']),
-                    nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']),
-                    akurasi: checkEmpty(properties['Akurasi']),
-                    negara: checkEmpty(properties['Negara']),
-                    provinsi: checkEmpty(properties['Provinsi']),
-                    kabupaten: checkEmpty(properties['Kabupaten / Kota']),
-                    verifiedat: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']).toISOString() : null,
-                    status: properties['Status Data'] === 'Proses' ? 0 : 1,
-                    createdAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
-                    updatedAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
-                    // kecamatan_id: await getKecamatanId(properties['Kecamatan']),
-                    // desa_id: await getDesaId(properties['Desa / Kelurahan']),
-                    tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
-                };
-    
-                let DataToponimsave = await Datatoponim.create(newDatatoponim);
-    
-                // Mengelola foto toponim
-                const fotoUrls = [
-                    checkEmpty(properties['foto1']),
-                    checkEmpty(properties['foto2']),
-                    checkEmpty(properties['foto3']),
-                    checkEmpty(properties['foto4']),
-                ];
-                for (const fotoUrl of fotoUrls) {
-                    if (fotoUrl) {
-                        const newFotoToponim = {
-                            datatoponim_id: DataToponimsave.id,
-                            foto_url: fotoUrl,
-                        };
-                        await Fototoponim.create(newFotoToponim);
-                    }
+                // Jika properti kosong, set nilai null pada kolom database
+                const cleanProperties = {};
+                for (const key in properties) {
+                    cleanProperties[key] = properties[key] === '' ? null : properties[key];
                 }
     
-                // Mengelola detail toponim
-                const newDetailtoponim = {
-                    datatoponim_id: DataToponimsave.id,
-                    zona_utm: checkEmpty(properties['NLP']),
-                    nlp: checkEmpty(properties['NLP']),
-                    klstpn: checkEmpty(properties['Unsur']),
-                    lcode: checkEmpty(properties['Unsur']),
-                    nama_gazeter: checkEmpty(properties['Nama Lokal']),
-                    nama_lain: checkEmpty(properties['Nama Lain']),
-                    asal_bahasa: checkEmpty(properties['Asal Bahasa']),
-                    arti_nama: checkEmpty(properties['Arti Nama']),
-                    sejarah_nama: checkEmpty(properties['Sejarah Nama']),
-                    nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']),
-                    nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']),
-                    ucapan: checkEmpty(properties['Ucapan']),
-                    ejaan: checkEmpty(properties['Ejaan']),
-                    nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']),
-                    akurasi: checkEmpty(properties['Akurasi']),
-                    narasumber: checkEmpty(properties['Narasumber']),
-                    sumber_data: checkEmpty(properties['Sumber Data']),
-                    createdAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
-                    updatedAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
+                // Buat data Datatoponim untuk disimpan
+                const newDatatoponim = {
+                    statpub: cleanProperties?.statpub,
+                    statpem: cleanProperties?.statpem,
+                    id_toponim: cleanProperties?.id_toponim,
+                    nama_lokal: cleanProperties?.namlok,
+                    nama_spesifik: cleanProperties?.namspe,
+                    nama_peta: cleanProperties?.nammap,
+                    tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
+                    klasifikasi_id: await getKlasifikasiId(cleanProperties?.klstpn),
+                    unsur_id: cleanProperties?.id_unsur,
+                    koordinat: cleanProperties?.koordinat1,
+                    bujur: geometry?.coordinates[0], // Ambil bujur dari geometry
+                    lintang: geometry?.coordinates[1], // Ambil lintang dari geometry
+                    kecamatan_id: await getKecamatanId(cleanProperties?.wadmkc),
+                    desa_id: await getDesaId(cleanProperties?.wadmkd),
+                    sketsa: cleanProperties?.sketsa,
+                    docpendukung: cleanProperties?.docpendukung,
+                    status: cleanProperties.status === 'Proses' ? 0 : 1,
+                    verifiedat: cleanProperties.status !== 'Proses' ? cleanProperties.tglsurvei || new Date().toISOString() : null,
+                    verifiednoted: cleanProperties?.verifiednoted,
+                    createdAt: cleanProperties.tglsurvei,
+                    updatedAt: cleanProperties.tglsurvei,
                 };
     
+                // Simpan data Datatoponim ke database
+                let DataToponimsave = await Datatoponim.create(newDatatoponim);
+    
+                // Buat dan simpan Detailtoponim
+                const newDetailtoponim = {
+                    datatoponim_id: DataToponimsave.id,
+                    zona_utm: cleanProperties.zonautm,
+                    nlp: cleanProperties.nlp,
+                    klstpn: cleanProperties.klstpn,
+                    lcode: cleanProperties.lcode,
+                    nama_gazeter: cleanProperties.namgaz,
+                    nama_lain: cleanProperties.alias,
+                    asal_bahasa: cleanProperties.aslbhs,
+                    arti_nama: cleanProperties.artinam,
+                    sejarah_nama: cleanProperties.sjhnam,
+                    nama_sebelumnya: cleanProperties.nambef,
+                    nama_rekomendasi: cleanProperties.namrec,
+                    ucapan: cleanProperties.ucapan,
+                    ejaan: cleanProperties.ejaan,
+                    nilai_ketinggian: cleanProperties.elevasi,
+                    akurasi: cleanProperties.akurasi,
+                    narasumber: cleanProperties.narsum,
+                    sumber_data: cleanProperties.sumber,
+                    createdAt: cleanProperties.tglsurvei,
+                    updatedAt: cleanProperties.tglsurvei,
+                };
                 await Detailtoponim.create(newDetailtoponim);
     
-                // Membaca fitur berikutnya
-                result = await source.read();
+                // Proses dan simpan data foto (jika ada)
+                if (cleanProperties.foto1) {
+                    await Fototoponim.create({ datatoponim_id: DataToponimsave.id, foto_url: cleanProperties.foto1 });
+                }
+                if (cleanProperties.foto2) {
+                    await Fototoponim.create({ datatoponim_id: DataToponimsave.id, foto_url: cleanProperties.foto2 });
+                }
+                if (cleanProperties.foto3) {
+                    await Fototoponim.create({ datatoponim_id: DataToponimsave.id, foto_url: cleanProperties.foto3 });
+                }
+                if (cleanProperties.foto4) {
+                    await Fototoponim.create({ datatoponim_id: DataToponimsave.id, foto_url: cleanProperties.foto4 });
+                }
+    
+                result = await source.read(); // Baca fitur berikutnya
             }
     
-            res.status(201).json({ message: 'Import successful!' });
+            res.status(201).json({ message: 'Shapefile import successful!' });
         } catch (error) {
             console.error('Error processing SHP: ', error.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
-
 
 }

@@ -13,6 +13,7 @@ module.exports = {
       { name: 'Toponim Pendidikan dan IPTEK', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Perairan', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Perekonomian dan Perdagangan', createdAt: new Date(), updatedAt: new Date() },
+
       { name: 'Toponim Peribadatan', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Permakaman', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Permukiman', createdAt: new Date(), updatedAt: new Date() },
@@ -23,8 +24,10 @@ module.exports = {
       { name: 'Toponim Sosial', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Transportasi', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Utilitas', createdAt: new Date(), updatedAt: new Date() },
+
       { name: 'Toponim Vegetasi dan Lahan Terbuka', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Toponim Wilayah Administrasi', createdAt: new Date(), updatedAt: new Date() },
+      
     ];
 
     await queryInterface.bulkInsert('Klasifikasis', Klasifikasis, {});
