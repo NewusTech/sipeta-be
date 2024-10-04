@@ -25,6 +25,8 @@ const schema = {
     kecamatan: { type: "string", optional: true },
     desa: { type: "string", optional: true },
     status: { type: "string", convert: true, optional: true },
+    kepala: { type: "string", optional: true },
+    sekretaris: { type: "string", optional: true },
     verifiednotes: { type: "string", optional: true },
     verifiedat: { type: "string", optional: true },
 };
