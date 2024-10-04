@@ -60,6 +60,12 @@ module.exports = {
       sekretaris: {
         type: Sequelize.STRING
       },
+      telp: {
+        type: Sequelize.STRING
+      },
+      email: {
+        type: Sequelize.STRING
+      },
       verifiednotes: {
         type: Sequelize.TEXT,
       },

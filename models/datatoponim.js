@@ -43,6 +43,8 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.SMALLINT,
     kepala: DataTypes.STRING, 
     sekretaris: DataTypes.STRING,
+    telp: DataTypes.STRING, 
+    email: DataTypes.STRING,
     verifiednotes: DataTypes.TEXT,
     verifiedat: DataTypes.DATE,
   }, {

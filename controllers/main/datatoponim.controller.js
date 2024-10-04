@@ -27,6 +27,8 @@ const schema = {
     status: { type: "string", convert: true, optional: true },
     kepala: { type: "string", optional: true },
     sekretaris: { type: "string", optional: true },
+    email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
+    telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
     verifiednotes: { type: "string", optional: true },
     verifiedat: { type: "string", optional: true },
 };
