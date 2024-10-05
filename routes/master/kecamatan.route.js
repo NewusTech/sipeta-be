@@ -11,4 +11,6 @@ route.get('/kecamatan/get/:id', kecamatanController.getById);
 route.put('/kecamatan/update/:id', [mid.checkRolesAndLogout(['Super Admin', 'Verifikator'])], kecamatanController.update); 
 route.delete('/kecamatan/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'Verifikator'])], kecamatanController.delete);
 
+route.get('/kecamatan/pdf', [mid.checkRoles()], kecamatanController.generatePDF);
+
 module.exports = route;
