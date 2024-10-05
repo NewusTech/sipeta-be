@@ -264,7 +264,7 @@ module.exports = {
             console.log(err);
             throw err;
         }
-    }
+    },
     
     
 }
