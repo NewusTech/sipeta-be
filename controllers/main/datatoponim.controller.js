@@ -20,6 +20,7 @@ const schema = {
     klasifikasi_id: { type: "string", convert: true, optional: true },
     unsur_id: { type: "string", convert: true, optional: true },
     koordinat: { type: "string", convert: true, optional: true },
+    latlong: { type: "string", convert: true, optional: true },
     bujur: { type: "string", convert: true, optional: true },
     lintang: { type: "string", convert: true, optional: true },
     kecamatan: { type: "string", optional: true },
