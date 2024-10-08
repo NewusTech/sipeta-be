@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     klasifikasi_id: DataTypes.INTEGER,
     unsur_id: DataTypes.INTEGER,
     koordinat: DataTypes.TEXT,
+    latlong: DataTypes.TEXT,
     bujur: DataTypes.TEXT,
     lintang: DataTypes.TEXT,
     kecamatan_id: DataTypes.INTEGER,
