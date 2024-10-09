@@ -102,8 +102,7 @@ module.exports = {
                     order: [['id', 'DESC']]
                 }),
                 Datatoponim.count({
-                    where: whereClause,
-                    include: includeModels,
+                    where: whereClause
                 })
             ]);
 
