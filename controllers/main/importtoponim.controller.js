@@ -61,6 +61,7 @@ module.exports = {
             const detailToponimData = [];
 
             // Batch process klasifikasi, kecamatan, and desa lookups
+            const unsurCache = {};
             const klasifikasiCache = {};
             const kecamatanCache = {};
             const desaCache = {};
@@ -68,6 +69,12 @@ module.exports = {
             for (const feature of jsonData.features) {
                 const properties = feature?.properties;
                 const geometry = feature?.geometry;
+
+                let unsur_id = unsurCache[properties?.ftype];
+                if (!unsur_id) {
+                    unsur_id = await getKlasifikasiId(properties?.ftype);
+                    unsurCache[properties?.ftype] = unsur_id;
+                }
 
                 let klasifikasi_id = klasifikasiCache[properties?.klstpn];
                 if (!klasifikasi_id) {
@@ -96,7 +103,7 @@ module.exports = {
                     nama_peta: properties?.nammap,
                     tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
                     klasifikasi_id,
-                    unsur_id: properties?.id_unsur,
+                    unsur_id,
                     koordinat: properties?.koordinat1,
                     bujur: properties?.koordx,
                     lintang: properties?.koordy,
@@ -156,16 +163,16 @@ module.exports = {
             if (!req.file) {
                 return res.status(400).json({ message: 'No file uploaded' });
             }
-    
+
             const workbook = new ExcelJS.Workbook();
             await workbook.xlsx.load(req.file.buffer);
             const worksheet = workbook.worksheets[0]; // Assumes data is in the first sheet
-    
+
             // Process each row in the worksheet
             const promises = [];
             worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
                 if (rowNumber === 1) return; // Skip header row
-    
+
                 const properties = {
                     // statpub: row.getCell(1).value,  // Adjust column indexes based on your Excel structure
                     // statpem: row.getCell(2).value,
@@ -192,7 +199,7 @@ module.exports = {
                 };
 
                 console.log(properties)
-    
+
                 const newDatatoponim = {
                     statpub: properties.statpub,
                     statpem: properties.statpem,
@@ -211,9 +218,9 @@ module.exports = {
                     createdAt: properties.tglsurvei,
                     updatedAt: properties.tglsurvei,
                 };
-    
+
                 const DataToponimsave = await Datatoponim.create(newDatatoponim);
-    
+
                 // Handle Foto Toponim
                 for (let i = 1; i <= 4; i++) {
                     const fotoUrl = properties[`foto${i}`];
@@ -225,7 +232,7 @@ module.exports = {
                         await Fototoponim.create(newFotoToponim);
                     }
                 }
-    
+
                 // Handle Detail Toponim
                 const newDetailtoponim = {
                     datatoponim_id: DataToponimsave.id,
@@ -235,13 +242,13 @@ module.exports = {
                     createdAt: properties.tglsurvei,
                     updatedAt: properties.tglsurvei,
                 };
-    
+
                 await Detailtoponim.create(newDetailtoponim);
             });
-    
+
             // Wait for all promises to finish
             await Promise.all(promises);
-    
+
             res.status(201).json({ message: 'Import successful!' });
         } catch (error) {
             console.error('Error importing data: ', error.message);
@@ -254,12 +261,12 @@ module.exports = {
             if (!req.file) {
                 return res.status(400).json({ message: 'No file uploaded' });
             }
-    
+
             const results = [];
             const readable = new Readable();
             readable.push(req.file.buffer);
             readable.push(null);
-    
+
             readable
                 .pipe(csv())
                 .on('data', (data) => {
@@ -280,12 +287,12 @@ module.exports = {
                             desa_id: properties['Desa / Kelurahan'] ? await getDesaId(properties['Desa / Kelurahan']) : null,
                             nama_surveyor: properties['Nama Surveyor'] ?? null,
                             narasumber: properties['Narasumber'] ?? null,
-                            verifiedat: properties['Status Data'] !== 'Proses' ? properties['Tanggal Survei'] || new Date().toISOString() : null, 
+                            verifiedat: properties['Status Data'] !== 'Proses' ? properties['Tanggal Survei'] || new Date().toISOString() : null,
                         };
-    
+
                         // Simpan data toponim ke database
                         let DataToponimsave = await Datatoponim.create(newDatatoponim);
-    
+
                         // Simpan foto jika ada
                         const fotoUrls = [
                             checkEmpty(properties['foto1']),
@@ -302,7 +309,7 @@ module.exports = {
                                 await Fototoponim.create(newFotoToponim);
                             }
                         }
-    
+
                         // Simpan detail toponim
                         const newDetailtoponim = {
                             datatoponim_id: DataToponimsave.id,
@@ -324,10 +331,10 @@ module.exports = {
                             updatedAt: checkEmpty(properties['Tanggal Survei']) ?? null,
                             catatan: checkEmpty(properties['Catatan']) ?? null,
                         };
-    
+
                         await Detailtoponim.create(newDetailtoponim);
                     }
-    
+
                     res.status(201).json({ message: 'Import successful!' });
                 });
         } catch (error) {
@@ -338,61 +345,94 @@ module.exports = {
 
     importShp: async (req, res) => {
         try {
-            if (!req.file) {
-                return res.status(400).json({ message: 'No file uploaded' });
+            // Pastikan semua file SHP, DBF, dan SHX diunggah
+            if (!req.files.shp || !req.files.dbf || !req.files.shx) {
+                return res.status(400).json({ message: 'Missing required SHP, DBF, or SHX file' });
             }
-    
-            // Membaca file SHP dari buffer
-            const buffer = req.file.buffer;
-    
-            // Buka file SHP
-            const source = await shapefile.open(buffer);
-    
-            // Baca setiap fitur di file SHP
+
+            const klasifikasiCache = {};
+            const unsurCache = {};
+            const kecamatanCache = {};
+            const desaCache = {};
+
+            // Membaca file dari buffer
+            const shpBuffer = req.files.shp[0].buffer;
+            const dbfBuffer = req.files.dbf[0].buffer;
+
+            // Simpan buffer sementara ke file (dibutuhkan oleh shapefile.open)
+            const tempShpPath = path.join(__dirname, 'temp.shp');
+            const tempDbfPath = path.join(__dirname, 'temp.dbf');
+
+            fs.writeFileSync(tempShpPath, shpBuffer);
+            fs.writeFileSync(tempDbfPath, dbfBuffer);
+
+            // Membuka file SHP dan DBF
+            const source = await shapefile.open(tempShpPath, tempDbfPath);
             let result = await source.read();
 
-            console.log(result.value)
             while (!result.done) {
                 const properties = result.value.properties;
                 const geometry = result.value.geometry;
-    
+
+                console.log("properties", properties)
+
+                let unsur_id = unsurCache[properties['FTYPE']];
+                if (!unsur_id) {
+                    unsur_id = await getKlasifikasiId(properties['FTYPE']);
+                    unsurCache[properties['FTYPE']] = unsur_id;
+                }
+
+                let klasifikasi_id = klasifikasiCache[properties['KLSTPN']];
+                if (!klasifikasi_id) {
+                    klasifikasi_id = await getKlasifikasiId(properties['KLSTPN']);
+                    klasifikasiCache[properties['KLSTPN']] = klasifikasi_id;
+                }
+
+                let kecamatan_id = kecamatanCache[properties['WADMKC']];
+                if (!kecamatan_id) {
+                    kecamatan_id = await getKecamatanId(properties['WADMKC']);
+                    kecamatanCache[properties['WADMKC']] = kecamatan_id;
+                }
+
+                let desa_id = desaCache[properties['WADMKD']];
+                if (!desa_id) {
+                    desa_id = await getDesaId(properties['WADMKD']);
+                    desaCache[properties['WADMKD']] = desa_id;
+                }
+
                 // Proses setiap feature
                 const newDatatoponim = {
-                    statpub: checkEmpty(properties['Status Publikasi']),
-                    statpem: checkEmpty(properties['Status Pembakuan']),
-                    id_toponim: checkEmpty(properties['Id Toponim']),
-                    nama_lokal: checkEmpty(properties['Nama Lokal']),
-                    nama_spesifik: checkEmpty(properties['Nama Spesifik']),
-                    nama_lain: checkEmpty(properties['Nama Lain']),
-                    asal_bahasa: checkEmpty(properties['Asal Bahasa']),
-                    arti_nama: checkEmpty(properties['Arti Nama']),
-                    sejarah_nama: checkEmpty(properties['Sejarah Nama']),
-                    nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']),
-                    nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']),
-                    ucapan: checkEmpty(properties['Ucapan']),
-                    ejaan: checkEmpty(properties['Ejaan']),
-                    nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']),
-                    akurasi: checkEmpty(properties['Akurasi']),
-                    negara: checkEmpty(properties['Negara']),
-                    provinsi: checkEmpty(properties['Provinsi']),
-                    kabupaten: checkEmpty(properties['Kabupaten / Kota']),
-                    verifiedat: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']).toISOString() : null,
-                    status: properties['Status Data'] === 'Proses' ? 0 : 1,
-                    createdAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
-                    updatedAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
-                    // kecamatan_id: await getKecamatanId(properties['Kecamatan']),
-                    // desa_id: await getDesaId(properties['Desa / Kelurahan']),
-                    tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
+                    statpub: checkEmpty(properties['STATPUB']),
+                    statpem: checkEmpty(properties['STATPEM']),
+                    id_toponim: checkEmpty(properties['ID_TOPONIM']),
+                    nama_lokal: checkEmpty(properties['NAMLOK']),
+                    nama_spesifik: checkEmpty(properties['NAMSPE']),
+                    nama_peta: checkEmpty(properties['NAMMAP']),
+                    // tipe_geometri: geometry?.type === "Point" ? 1 : geometry?.type === "LineString" ? 2 : geometry?.type === "Polygon" ? 3 : null,
+                    klasifikasi_id,
+                    unsur_id,
+                    koordinat: checkEmpty(properties['KOORDINAT1']),
+                    bujur: checkEmpty(properties['KOORDX']),
+                    lintang: checkEmpty(properties['KOORDY']),
+                    kecamatan_id,
+                    desa_id,
+                    sketsa: checkEmpty(properties['SKETSA']),
+                    docpendukung: checkEmpty(properties['DOCPENDUKUNG']),
+                    status: properties['STATUS'] === 'Proses' ? 0 : 1,
+                    verifiedat: properties['STATUS'] !== 'Proses' ? properties['TGLSURVEI'] || new Date().toISOString() : null,
+                    verifiednoted: properties['verifiednoted'],
+                    createdAt: properties['TGLSURVEI'],
+                    updatedAt: properties['TGLSURVEI'],
                 };
-    
+
                 let DataToponimsave = await Datatoponim.create(newDatatoponim);
-    
+
                 // Mengelola foto toponim
                 const fotoUrls = [
-                    checkEmpty(properties['foto1']),
-                    checkEmpty(properties['foto2']),
-                    checkEmpty(properties['foto3']),
-                    checkEmpty(properties['foto4']),
+                    checkEmpty(properties['FOTO1']),
+                    checkEmpty(properties['FOTO2']),
+                    checkEmpty(properties['FOTO3']),
+                    checkEmpty(properties['FOTO4']),
                 ];
                 for (const fotoUrl of fotoUrls) {
                     if (fotoUrl) {
@@ -403,37 +443,40 @@ module.exports = {
                         await Fototoponim.create(newFotoToponim);
                     }
                 }
-    
+
                 // Mengelola detail toponim
                 const newDetailtoponim = {
                     datatoponim_id: DataToponimsave.id,
-                    zona_utm: checkEmpty(properties['NLP']),
+                    zona_utm: checkEmpty(properties['ZONAUTM']),
                     nlp: checkEmpty(properties['NLP']),
-                    klstpn: checkEmpty(properties['Unsur']),
-                    lcode: checkEmpty(properties['Unsur']),
-                    nama_gazeter: checkEmpty(properties['Nama Lokal']),
-                    nama_lain: checkEmpty(properties['Nama Lain']),
-                    asal_bahasa: checkEmpty(properties['Asal Bahasa']),
-                    arti_nama: checkEmpty(properties['Arti Nama']),
-                    sejarah_nama: checkEmpty(properties['Sejarah Nama']),
-                    nama_sebelumnya: checkEmpty(properties['Nama Sebelumnya']),
-                    nama_rekomendasi: checkEmpty(properties['Nama Rekomendasi']),
-                    ucapan: checkEmpty(properties['Ucapan']),
-                    ejaan: checkEmpty(properties['Ejaan']),
-                    nilai_ketinggian: checkEmpty(properties['Nilai Ketinggian']),
-                    akurasi: checkEmpty(properties['Akurasi']),
-                    narasumber: checkEmpty(properties['Narasumber']),
-                    sumber_data: checkEmpty(properties['Sumber Data']),
-                    createdAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
-                    updatedAt: properties['Tanggal Survei'] ? new Date(properties['Tanggal Survei']) : new Date(),
+                    lcode: checkEmpty(properties['LCODE']),
+                    nama_gazeter: checkEmpty(properties['NAMGAZ']),
+                    nama_lain: checkEmpty(properties['ALIAS']),
+                    asal_bahasa: checkEmpty(properties['ASLBHS']),
+                    arti_nama: checkEmpty(properties['ARTINAM']),
+                    sejarah_nama: checkEmpty(properties['SJHNAM']),
+                    nama_sebelumnya: checkEmpty(properties['NAMBEF']),
+                    nama_rekomendasi: checkEmpty(properties['NAMREC']),
+                    ucapan: checkEmpty(properties['UCAPAN']),
+                    ejaan: checkEmpty(properties['EJAAN']),
+                    nilai_ketinggian: checkEmpty(properties['ELEVASI']),
+                    akurasi: checkEmpty(properties['AKURASI']),
+                    narasumber: checkEmpty(properties['NARSUM']),
+                    sumber_data: checkEmpty(properties['SUMBER']),
+                    createdAt: properties['TGLSURVEI'] ? new Date(properties['TGLSURVEI']) : new Date(),
+                    updatedAt: properties['TGLSURVEI'] ? new Date(properties['TGLSURVEI']) : new Date(),
                 };
-    
+
                 await Detailtoponim.create(newDetailtoponim);
-    
+
                 // Membaca fitur berikutnya
                 result = await source.read();
             }
-    
+
+            // Hapus file sementara
+            fs.unlinkSync(tempShpPath);
+            fs.unlinkSync(tempDbfPath);
+
             res.status(201).json({ message: 'Import successful!' });
         } catch (error) {
             console.error('Error processing SHP: ', error.message);
