@@ -121,7 +121,8 @@ module.exports = {
                     const { count: desaCount, rows: desaRows } = await Desa.findAndCountAll({
                         where: { kecamatan_id: kecamatan.id },
                         limit: desaLimit,
-                        offset: desaOffset
+                        offset: desaOffset,
+                        order: [['id', 'ASC']]
                     });
 
                     return {
