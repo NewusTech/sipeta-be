@@ -362,7 +362,11 @@ module.exports = {
             htmlContent = htmlContent.replace('{{kecamatanRows}}', kecamatanRows);
 
             // Generate PDF with Puppeteer
-            const browser = await puppeteer.launch({ headless: true });
+            const browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            });
+            
             const page = await browser.newPage();
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
             const pdfBuffer = await page.pdf({
@@ -372,8 +376,10 @@ module.exports = {
 
             await browser.close();
 
-            const filename = `data-kecamatan-${new Date().toISOString().replace(/[:.]/g, '-')}.pdf`;
-            res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const filename = `kecamatan-lampungutara-${currentDate}.pdf`;
+
+            res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
             res.setHeader('Content-type', 'application/pdf');
             res.send(pdfBuffer);
         } catch (err) {
