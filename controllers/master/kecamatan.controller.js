@@ -8,6 +8,7 @@ const puppeteer = require('puppeteer');
 const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../../errorHandler/logger');
 
 const schema = {
     name: { type: "string", optional: true },
@@ -376,6 +377,9 @@ module.exports = {
             res.setHeader('Content-type', 'application/pdf');
             res.send(pdfBuffer);
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+
             res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
         }
