@@ -4,8 +4,8 @@ const { Mapslampura, User } = require('../../models');
 
 const Validator = require("fastest-validator");
 const v = new Validator();
-const { Op } = require('sequelize');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const logger = require('../../errorHandler/logger');
 
 const Redis = require("ioredis");
 const redisClient = new Redis({
@@ -39,6 +39,8 @@ module.exports = {
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get mapslampura by id', mapslampuraGet));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -128,6 +130,8 @@ module.exports = {
             res.status(200).json(response(200, 'success update mapslampura', mapslampuraAfterUpdate));
     
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -177,6 +181,8 @@ module.exports = {
             return mapslampuraAfterUpdate;
     
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }

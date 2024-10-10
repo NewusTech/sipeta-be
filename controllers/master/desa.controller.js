@@ -5,6 +5,7 @@ const { generatePagination } = require('../../pagination/pagination');
 const Validator = require("fastest-validator");
 const v = new Validator();
 const { Op } = require('sequelize');
+const logger = require('../../errorHandler/logger');
 
 const schema = {
     name: { type: "string", optional: true },
@@ -33,6 +34,8 @@ module.exports = {
 
             res.status(201).json(response(201, 'success create desa', desaCreate));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
@@ -80,6 +83,8 @@ module.exports = {
             });
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -100,6 +105,8 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get desa by id', desaGet));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -130,6 +137,8 @@ module.exports = {
 
             res.status(200).json(response(200, 'success update data', desan));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
@@ -153,6 +162,8 @@ module.exports = {
 
             res.status(200).json(response(200, 'success delete data'));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);

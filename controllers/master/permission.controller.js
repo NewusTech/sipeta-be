@@ -3,6 +3,7 @@ const { response } = require('../../helpers/response.formatter');
 const { Permission } = require('../../models');
 const Validator = require("fastest-validator");
 const v = new Validator();
+const logger = require('../../errorHandler/logger');
 
 module.exports = {
 
@@ -35,6 +36,8 @@ module.exports = {
 
             res.status(201).json(response(201, 'success create permission', permissionCreate));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -51,6 +54,8 @@ module.exports = {
             res.status(200).json(response(200, 'success get permission', permissionGets));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -74,6 +79,8 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get permission by id', permissionGet));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -133,6 +140,8 @@ module.exports = {
             res.status(200).json(response(200, 'success update permission', permissionAfterUpdate));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -164,6 +173,8 @@ module.exports = {
             res.status(200).json(response(200, 'success delete permission'));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             if (err.name === 'SequelizeForeignKeyConstraintError') {
                 res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
             } else {

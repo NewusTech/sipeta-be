@@ -1,10 +1,11 @@
-const { Datatoponim, Detailtoponim, Desa, Kecamatan, Unsur, Klasifikasi, Fototoponim, sequelize } = require('../../models');
+const { Datatoponim, Detailtoponim, Desa, Kecamatan, Unsur, Klasifikasi, Fototoponim } = require('../../models');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 const shapefile = require('shapefile');
+const logger = require('../../errorHandler/logger');
 
 const getKlasifikasiId = async (klasifikasiName) => {
     const klasifikasi = await Klasifikasi.findOne({ where: { name: klasifikasiName } });
@@ -152,8 +153,10 @@ module.exports = {
             }
 
             res.status(201).json({ message: 'Import successful!' });
-        } catch (error) {
-            console.error('Error importing data: ', error.message);
+        } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error importing data: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     },
@@ -250,8 +253,10 @@ module.exports = {
             await Promise.all(promises);
 
             res.status(201).json({ message: 'Import successful!' });
-        } catch (error) {
-            console.error('Error importing data: ', error.message);
+        } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error importing data: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     },
@@ -337,8 +342,10 @@ module.exports = {
 
                     res.status(201).json({ message: 'Import successful!' });
                 });
-        } catch (error) {
-            console.error('Error importing data: ', error.message);
+        } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error importing data: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     },
@@ -478,8 +485,10 @@ module.exports = {
             fs.unlinkSync(tempDbfPath);
 
             res.status(201).json({ message: 'Import successful!' });
-        } catch (error) {
-            console.error('Error processing SHP: ', error.message);
+        } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error processing SHP: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     }

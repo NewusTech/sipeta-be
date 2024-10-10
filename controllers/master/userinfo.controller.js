@@ -8,6 +8,7 @@ const Validator = require("fastest-validator");
 const v = new Validator();
 const { Op } = require('sequelize');
 const { generatePagination } = require('../../pagination/pagination');
+const logger = require('../../errorHandler/logger');
 
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
@@ -207,6 +208,9 @@ module.exports = {
             });
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            
             res.status(500).json({
                 status: 500,
                 message: 'internal server error',
@@ -256,6 +260,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get user by slug', userGet));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -357,6 +364,9 @@ module.exports = {
             await transaction.commit();
             res.status(200).json(response(200, 'success create userinfo', userinfoCreate));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            
             await transaction.rollback();
             if (err.name === 'SequelizeUniqueConstraintError') {
                 // Menangani error khusus untuk constraint unik
@@ -470,6 +480,9 @@ module.exports = {
             res.status(200).json(response(200, 'success update userinfo', userinfoAfterUpdate));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            
             if (err.name === 'SequelizeUniqueConstraintError') {
                 // Menangani error khusus untuk constraint unik
                 res.status(400).json({
@@ -547,6 +560,9 @@ module.exports = {
             res.status(200).json(response(200, 'success delete user'));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            
             // Rollback transaksi jika terjadi kesalahan
             await transaction.rollback();
             res.status(500).json(response(500, 'Internal server error', err));
@@ -625,6 +641,9 @@ module.exports = {
             res.status(200).json(response(200, 'success update fotoprofil'));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
