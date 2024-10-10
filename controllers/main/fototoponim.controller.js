@@ -3,6 +3,7 @@ const { response } = require('../../helpers/response.formatter');
 const { Datatoponim, Fototoponim, sequelize } = require('../../models');
 const { getKeyFromUrl } = require('../../helpers/awshelper.js');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const logger = require('../../errorHandler/logger');
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -29,7 +30,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'Detailtoponim found', fotoToponim));
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
         }
     },
 
@@ -75,9 +78,11 @@ module.exports = {
             res.status(200).json(response(200, 'Foto berhasil disubmit', toponim));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             console.log(err);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
         }
     },
 
@@ -136,9 +141,11 @@ module.exports = {
             res.status(200).json(response(200, 'Sketsa berhasil diupdate', toponim));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             console.log(err);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
         }
     },
 
@@ -199,9 +206,11 @@ module.exports = {
             res.status(200).json(response(200, 'Docpendukung berhasil diupdate', toponim));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             console.log(err);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
         }
     },
 
@@ -261,9 +270,11 @@ module.exports = {
             res.status(200).json(response(200, 'Sketsa berhasil diupdate', toponim));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
             console.log(err);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
         }
     },
 
@@ -304,7 +315,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'Sketsa deleted successfully'));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -344,7 +357,9 @@ module.exports = {
 
             return res.status(200).json(response(200, 'Docpendukung berhasil dihapus'));
         } catch (err) {
-            return res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            return res.status(500).json(response(500, 'internal server error', err.message));
         }
     },
 
@@ -383,7 +398,9 @@ module.exports = {
 
             return res.status(200).json(response(200, 'Foto Toponim berhasil dihapus'));
         } catch (err) {
-            return res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            return res.status(500).json(response(500, 'internal server error', err.message));
         }
     }
 

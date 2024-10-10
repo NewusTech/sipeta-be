@@ -5,6 +5,8 @@ const ExcelJS = require('exceljs');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 const shapefile = require('shapefile');
+const logger = require('../../errorHandler/logger');
+const { response } = require('../../helpers/response.formatter');
 
 const getKlasifikasiId = async (klasifikasiName) => {
     const klasifikasi = await Klasifikasi.findOne({ where: { name: klasifikasiName } });
@@ -49,6 +51,7 @@ const saveFototoponim = async (datatoponimId, properties) => {
 module.exports = {
 
     importJson: async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
             if (!req.file) {
                 return res.status(400).json({ message: 'No file uploaded' });
@@ -72,7 +75,7 @@ module.exports = {
 
                 let unsur_id = unsurCache[properties?.ftype];
                 if (!unsur_id) {
-                    unsur_id = await getKlasifikasiId(properties?.ftype);
+                    unsur_id = await getUnsurId(properties?.ftype);
                     unsurCache[properties?.ftype] = unsur_id;
                 }
 
@@ -94,6 +97,15 @@ module.exports = {
                     desaCache[properties?.wadmkd] = desa_id;
                 }
 
+                let latlong;
+                if (geometry?.type === "Polygon" || geometry?.type === "Area" || geometry?.type === "LineString" || geometry?.type === "Garis") {
+                    latlong = geometry.coordinates[0]
+                        .map(coord => `${coord[1]}, ${coord[0]}`)
+                        .join('; ');
+                } else if (geometry?.type === "Point" || geometry?.type === "Titik") {
+                    latlong = `${geometry?.coordinates[1]}, ${geometry?.coordinates[0]}`;
+                }
+
                 const newDatatoponim = {
                     statpub: properties?.statpub,
                     statpem: properties?.statpem,
@@ -105,6 +117,7 @@ module.exports = {
                     klasifikasi_id,
                     unsur_id,
                     koordinat: properties?.koordinat1,
+                    latlong,
                     bujur: properties?.koordx,
                     lintang: properties?.koordy,
                     kecamatan_id,
@@ -151,9 +164,14 @@ module.exports = {
                 await saveFototoponim(DataToponimsave.id, properties);
             }
 
+            await transaction.commit();
+
             res.status(201).json({ message: 'Import successful!' });
-        } catch (error) {
-            console.error('Error importing data: ', error.message);
+        } catch (err) {
+            await transaction.rollback();
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error importing data: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     },
@@ -250,8 +268,10 @@ module.exports = {
             await Promise.all(promises);
 
             res.status(201).json({ message: 'Import successful!' });
-        } catch (error) {
-            console.error('Error importing data: ', error.message);
+        } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error importing data: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     },
@@ -337,13 +357,16 @@ module.exports = {
 
                     res.status(201).json({ message: 'Import successful!' });
                 });
-        } catch (error) {
-            console.error('Error importing data: ', error.message);
+        } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error importing data: ', err.message);
             res.status(500).json({ message: 'Internal server error' });
         }
     },
 
     importShp: async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
             // Pastikan semua file SHP, DBF, dan SHX diunggah
             if (!req.files.shp || !req.files.dbf || !req.files.shx) {
@@ -370,15 +393,20 @@ module.exports = {
             const source = await shapefile.open(tempShpPath, tempDbfPath);
             let result = await source.read();
 
+            let i = 0;
             while (!result.done) {
+                i++
+                console.log("i", i)
+                
                 const properties = result.value.properties;
                 const geometry = result.value.geometry;
 
                 console.log("properties", properties)
+                console.log("geometry", geometry)
 
                 let unsur_id = unsurCache[properties['FTYPE']];
                 if (!unsur_id) {
-                    unsur_id = await getKlasifikasiId(properties['FTYPE']);
+                    unsur_id = await getUnsurId(properties['FTYPE']);
                     unsurCache[properties['FTYPE']] = unsur_id;
                 }
 
@@ -400,6 +428,15 @@ module.exports = {
                     desaCache[properties['WADMKD']] = desa_id;
                 }
 
+                let latlong;
+                if (geometry?.type === "Polygon" || geometry?.type === "Area" || geometry?.type === "LineString" || geometry?.type === "Garis") {
+                    latlong = geometry.coordinates[0]
+                        .map(coord => `${coord[1]}, ${coord[0]}`)
+                        .join('; ');
+                } else if (geometry?.type === "Point" || geometry?.type === "Titik") {
+                    latlong = `${geometry?.coordinates[1]}, ${geometry?.coordinates[0]}`;
+                }
+
                 // Proses setiap feature
                 const newDatatoponim = {
                     statpub: checkEmpty(properties['STATPUB']),
@@ -408,10 +445,11 @@ module.exports = {
                     nama_lokal: checkEmpty(properties['NAMLOK']),
                     nama_spesifik: checkEmpty(properties['NAMSPE']),
                     nama_peta: checkEmpty(properties['NAMMAP']),
-                    // tipe_geometri: geometry?.type === "Point" ? 1 : geometry?.type === "LineString" ? 2 : geometry?.type === "Polygon" ? 3 : null,
+                    tipe_geometri: geometry?.type === "Point" || geometry?.type === "Titik" ? 1 : geometry?.type === "Garis" || geometry?.type === "LineString" ? 2 : geometry?.type === "Area" || geometry?.type === "Polygon" ? 3 : null,
                     klasifikasi_id,
                     unsur_id,
                     koordinat: checkEmpty(properties['KOORDINAT1']),
+                    latlong,
                     bujur: checkEmpty(properties['KOORDX']),
                     lintang: checkEmpty(properties['KOORDY']),
                     kecamatan_id,
@@ -477,10 +515,15 @@ module.exports = {
             fs.unlinkSync(tempShpPath);
             fs.unlinkSync(tempDbfPath);
 
+            await transaction.commit();
+
             res.status(201).json({ message: 'Import successful!' });
-        } catch (error) {
-            console.error('Error processing SHP: ', error.message);
-            res.status(500).json({ message: 'Internal server error' });
+        } catch (err) {
+            await transaction.rollback();
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            console.error('Error processing SHP: ', err.message);
+            res.status(500).json(response(500, 'internal server error', err.message));
         }
     }
 

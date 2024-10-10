@@ -1,7 +1,7 @@
 const { response } = require('../../helpers/response.formatter');
 const { Manualbook, sequelize } = require('../../models');
 const { getKeyFromUrl } = require('../../helpers/awshelper.js');
-
+const logger = require('../../errorHandler/logger');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
@@ -26,7 +26,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get', manualbookGet));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -46,7 +48,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get', manualbookGet));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -107,7 +111,9 @@ module.exports = {
             res.status(200).json(response(200, 'success update manualbook', manualbook));
 
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },

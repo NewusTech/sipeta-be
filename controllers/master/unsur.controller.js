@@ -3,6 +3,7 @@ const { response } = require('../../helpers/response.formatter');
 const { Unsur } = require('../../models');
 const Validator = require("fastest-validator");
 const v = new Validator();
+const logger = require('../../errorHandler/logger');
 
 module.exports = {
 
@@ -34,7 +35,9 @@ module.exports = {
             //response menggunakan helper response.formatter
             res.status(201).json(response(201, 'success create', unsurCreate));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -52,7 +55,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get data', unsurData));
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -75,7 +80,9 @@ module.exports = {
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get Unsur by slug', UnsurGet));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -123,7 +130,9 @@ module.exports = {
             res.status(200).json(response(200, 'success update'));
 
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -153,10 +162,12 @@ module.exports = {
             res.status(200).json(response(200, 'success delete Unsur'));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             if (err.name === 'SequelizeForeignKeyConstraintError') {
                 res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
             } else {
-                res.status(500).json(response(500, 'Internal server error', err));
+                res.status(500).json(response(500, 'internal server error', err.message));
                 console.log(err);
             }
         }

@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
 const shpwrite = require('shp-write');
+const logger = require('../../errorHandler/logger');
 
 const schema = {
     id_toponim: { type: "string", optional: true },
@@ -115,7 +116,9 @@ module.exports = {
                 pagination: pagination
             });
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -143,7 +146,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'success fetch toponim', toponim));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -162,7 +167,7 @@ module.exports = {
             }
 
             if (req?.body?.kecamatan) toponimCreateObj.kecamatan_id = await getKecamatanId(req?.body?.kecamatan)
-            if (req?.body?.desa) toponimCreateObj.desa_id = await getDesaId(req?.body?.desa) 
+            if (req?.body?.desa) toponimCreateObj.desa_id = await getDesaId(req?.body?.desa)
 
             const validate = v.validate(toponimCreateObj, schema);
             if (validate.length > 0) {
@@ -176,8 +181,10 @@ module.exports = {
 
             res.status(201).json(response(201, 'success create toponim', toponimCreate));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -196,7 +203,7 @@ module.exports = {
             }
 
             if (req?.body?.kecamatan) toponimUpdateObj.kecamatan_id = await getKecamatanId(req?.body?.kecamatan)
-            if (req?.body?.desa) toponimUpdateObj.desa_id = await getDesaId(req?.body?.desa) 
+            if (req?.body?.desa) toponimUpdateObj.desa_id = await getDesaId(req?.body?.desa)
 
             const toponim = await Datatoponim.findByPk(id);
             if (!toponim) {
@@ -210,8 +217,10 @@ module.exports = {
 
             res.status(200).json(response(200, 'success update toponim', toponim));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -237,12 +246,14 @@ module.exports = {
             // Response using helper response.formatter
             res.status(200).json(response(200, 'success delete toponim'));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             if (transaction) await transaction.rollback();
 
             if (err.name === 'SequelizeForeignKeyConstraintError') {
                 res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
             } else {
-                res.status(500).json(response(500, 'Internal server error', err));
+                res.status(500).json(response(500, 'internal server error', err.message));
                 console.log(err);
             }
         }
@@ -351,7 +362,9 @@ module.exports = {
             res.send(pdfBuffer);
 
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -458,7 +471,9 @@ module.exports = {
             await workbook.xlsx.write(res);
             res.end();
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -518,6 +533,8 @@ module.exports = {
             await workbook.csv.write(res);
             res.end();
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error('Error exporting CSV: ', err.message);
             res.status(500).json({ status: 500, message: 'Internal Server Error' });
         }
@@ -638,6 +655,8 @@ module.exports = {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify(geoJson, null, 2));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error('Error exporting JSON: ', err.message);
             res.status(500).json({ status: 500, message: 'Internal Server Error' });
         }
@@ -733,6 +752,8 @@ module.exports = {
                 fs.unlinkSync(filePath);
             });
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error('Error exporting SHP: ', err.message);
             res.status(500).json({ status: 500, message: 'Internal Server Error' });
         }

@@ -3,6 +3,7 @@ const { response } = require('../../helpers/response.formatter');
 const { Klasifikasi, sequelize } = require('../../models');
 const Validator = require("fastest-validator");
 const v = new Validator();
+const logger = require('../../errorHandler/logger');
 
 const schema = {
     name: { type: "string", optional: true },
@@ -27,8 +28,10 @@ module.exports = {
 
             res.status(201).json(response(201, 'success create klasifikasi', klasifikasiCreate));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -40,7 +43,9 @@ module.exports = {
             res.status(200).json(response(200, 'success get klasifikasi', klasifikasiGets));
 
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -60,7 +65,9 @@ module.exports = {
 
             res.status(200).json(response(200, 'success get klasifikasi by id', klasifikasiGet));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -90,8 +97,10 @@ module.exports = {
 
             res.status(200).json(response(200, 'success update klasifikasi', klasifikasi));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -113,12 +122,14 @@ module.exports = {
 
             res.status(200).json(response(200, 'success delete klasifikasi'));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             if (transaction) await transaction.rollback();
 
             if (err.name === 'SequelizeForeignKeyConstraintError') {
                 res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
             } else {
-                res.status(500).json(response(500, 'Internal server error', err));
+                res.status(500).json(response(500, 'internal server error', err.message));
                 console.log(err);
             }
         }

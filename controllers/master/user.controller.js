@@ -114,6 +114,9 @@ module.exports = {
             res.status(201).json(response(201, 'user created', userCreate));
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+
             if (!transaction.finished) {
                 await transaction.rollback();
             }
@@ -126,7 +129,7 @@ module.exports = {
                 });
             } else {
                 // Menangani error lainnya
-                res.status(500).json(response(500, 'terjadi kesalahan pada server', err));
+                res.status(500).json(response(500, 'internal server error', err.message));
             }
             console.log(err);
         }
@@ -221,10 +224,9 @@ module.exports = {
             res.status(200).json(response(200, 'login success', { token: token }));
 
         } catch (err) {
-
             logger.error(`Error : ${err}`);
             logger.error(`Error message: ${err.message}`);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -243,7 +245,9 @@ module.exports = {
             //send response
             res.status(200).json(response(200, 'logout success', tokenInsert));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -330,7 +334,9 @@ module.exports = {
             });
 
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -398,7 +404,9 @@ module.exports = {
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get user by id', formattedUsers));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -478,7 +486,9 @@ module.exports = {
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get user by id', formattedUsers));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -517,7 +527,9 @@ module.exports = {
             res.status(200).json(response(200, 'success delete user'));
 
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -549,6 +561,8 @@ module.exports = {
 
             return res.status(200).json({ message: 'Password has been updated.' });
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error(err);
             return res.status(500).json({ message: 'Internal server error.' });
         }
@@ -577,6 +591,8 @@ module.exports = {
 
             return res.status(200).json({ message: 'Password has been updated.' });
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error(err);
             return res.status(500).json({ message: 'Internal server error.' });
         }
@@ -627,6 +643,8 @@ module.exports = {
             });
 
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error(err);
             return res.status(500).json({ message: 'Internal server error.' });
         }
@@ -663,6 +681,8 @@ module.exports = {
 
             return res.status(200).json({ message: 'Password berhasil diganti.' });
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             console.error(err);
             return res.status(500).json({ message: 'Internal server error.' });
         }
