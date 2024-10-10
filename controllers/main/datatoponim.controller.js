@@ -483,7 +483,7 @@ module.exports = {
             const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
             const whereClause = {};
             const detailToponimWhereClause = {};
-
+    
             if (search) {
                 whereClause[Op.or] = [
                     { nama_lokal: { [Op.iLike]: `%${search}%` } },
@@ -494,13 +494,13 @@ module.exports = {
                     { nama_lain: { [Op.iLike]: `%${search}%` } }
                 ];
             }
-
+    
             if (klasifikasi_id) whereClause.klasifikasi_id = klasifikasi_id;
             if (unsur_id) whereClause.unsur_id = unsur_id;
             if (kecamatan_id) whereClause.kecamatan_id = kecamatan_id;
             if (desa_id) whereClause.desa_id = desa_id;
             if (status) whereClause.status = status;
-
+    
             const dataGets = await Datatoponim.findAll({
                 where: whereClause,
                 include: [
@@ -513,23 +513,82 @@ module.exports = {
                 ],
                 order: [['id', 'DESC']]
             });
-
-            const exportData = dataGets.map(item => [
-                `"${new Date(item?.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}","${item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi'}","${item?.id_toponim}","${item?.nama_lokal ?? ''}","${item?.Kecamatan?.name ?? ''}","${item?.Desa?.name ?? ''}","${item?.verifiednotes || '-'}"`
-            ]);
-
+    
+            const exportData = dataGets.map(item => {
+    
+                return [
+                    item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi',
+                    'Data Survei',
+                    item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi',
+                    item?.Detailtoponim?.nlp,
+                    item?.Unsur?.name,
+                    item?.nama_lokal,
+                    item?.nama_spesifik,
+                    item?.Detailtoponim?.nama_lain,  
+                    item?.Detailtoponim?.asal_bahasa,
+                    item?.Detailtoponim?.arti_nama,
+                    item?.Detailtoponim?.sejarah_nama,
+                    item?.Detailtoponim?.nama_sebelumnya,
+                    item?.Detailtoponim?.nama_rekomendasi,
+                    item?.Detailtoponim?.ucapan,
+                    item?.Detailtoponim?.ejaan,
+                    item?.Detailtoponim?.nilai_ketinggian,
+                    item?.Detailtoponim?.akurasi,
+                    "INDONESIA",
+                    "Lampung",
+                    "Lampung Utara",
+                    item?.id_toponim,
+                    item?.Kecamatan?.name,
+                    item?.Desa?.name,
+                    "-",
+                    item?.Detailtoponim?.narasumber,
+                    new Date(item?.createdAt).toISOString().split('T')[0],
+                    item?.Detailtoponim?.sumber_data,
+                    item?.Detailtoponim?.catatan
+                ];
+            });
+    
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Pendataan Nama Rupabumi');
-
-            worksheet.addRow([`"Tanggal,"Status","ID Toponim","Nama Tempat","Kecamatan","Desa","Keterangan"`]);
-
+    
+            worksheet.addRow([
+                "Status Publikasi",
+                "Status Pembakuan",
+                "Status Data",
+                "NLP",
+                "Unsur",
+                "Nama Lokal",
+                "Nama Spesifik",
+                "Nama Lain",
+                "Asal Bahasa",
+                "Arti Nama",
+                "Sejarah Nama",
+                "Nama Sebelumnya",
+                "Nama Rekomendasi",
+                "Ucapan",
+                "Ejaan",
+                "Nilai Ketinggian",
+                "Akurasi",
+                "Negara",
+                "Provinsi",
+                "Kabupaten / Kota",
+                "Id Toponim",
+                "Kecamatan",
+                "Desa / Kelurahan",
+                "Nama Surveyor",
+                "Narasumber",
+                "Tanggal Survei",
+                "Sumber Data",
+                "Catatan"
+            ]);
+    
             exportData.forEach(data => {
-                worksheet.addRow(Object.values(data));
+                worksheet.addRow(data);
             });
-
+    
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename=Pendataan_Rupabumi_${new Date().getTime()}.csv`);
-
+    
             await workbook.csv.write(res);
             res.end();
         } catch (err) {
@@ -539,7 +598,7 @@ module.exports = {
             res.status(500).json({ status: 500, message: 'Internal Server Error' });
         }
     },
-
+    
     json: async (req, res) => {
         try {
             const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
