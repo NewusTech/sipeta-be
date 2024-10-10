@@ -21,7 +21,7 @@ module.exports = {
         } catch (err) {
             logger.error(`Error : ${err}`);
             logger.error(`Error message: ${err.message}`);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
@@ -73,7 +73,7 @@ module.exports = {
         } catch (err) {
             logger.error(`Error : ${err}`);
             logger.error(`Error message: ${err.message}`);
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json(response(500, 'internal server error', err.message));
             console.log(err);
         }
     },
