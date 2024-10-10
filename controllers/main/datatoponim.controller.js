@@ -483,7 +483,7 @@ module.exports = {
             const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
             const whereClause = {};
             const detailToponimWhereClause = {};
-    
+
             if (search) {
                 whereClause[Op.or] = [
                     { nama_lokal: { [Op.iLike]: `%${search}%` } },
@@ -494,13 +494,13 @@ module.exports = {
                     { nama_lain: { [Op.iLike]: `%${search}%` } }
                 ];
             }
-    
+
             if (klasifikasi_id) whereClause.klasifikasi_id = klasifikasi_id;
             if (unsur_id) whereClause.unsur_id = unsur_id;
             if (kecamatan_id) whereClause.kecamatan_id = kecamatan_id;
             if (desa_id) whereClause.desa_id = desa_id;
             if (status) whereClause.status = status;
-    
+
             const dataGets = await Datatoponim.findAll({
                 where: whereClause,
                 include: [
@@ -513,9 +513,9 @@ module.exports = {
                 ],
                 order: [['id', 'DESC']]
             });
-    
+
             const exportData = dataGets.map(item => {
-    
+
                 return [
                     item?.status === 1 ? 'Divalidasi' : item?.status === 2 ? 'Ditolak' : 'Belum Divalidasi',
                     'Data Survei',
@@ -524,7 +524,7 @@ module.exports = {
                     item?.Unsur?.name,
                     item?.nama_lokal,
                     item?.nama_spesifik,
-                    item?.Detailtoponim?.nama_lain,  
+                    item?.Detailtoponim?.nama_lain,
                     item?.Detailtoponim?.asal_bahasa,
                     item?.Detailtoponim?.arti_nama,
                     item?.Detailtoponim?.sejarah_nama,
@@ -547,10 +547,10 @@ module.exports = {
                     item?.Detailtoponim?.catatan
                 ];
             });
-    
+
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Pendataan Nama Rupabumi');
-    
+
             worksheet.addRow([
                 "Status Publikasi",
                 "Status Pembakuan",
@@ -581,14 +581,14 @@ module.exports = {
                 "Sumber Data",
                 "Catatan"
             ]);
-    
+
             exportData.forEach(data => {
                 worksheet.addRow(data);
             });
-    
+
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename=Pendataan_Rupabumi_${new Date().getTime()}.csv`);
-    
+
             await workbook.csv.write(res);
             res.end();
         } catch (err) {
@@ -598,7 +598,7 @@ module.exports = {
             res.status(500).json({ status: 500, message: 'Internal Server Error' });
         }
     },
-    
+
     json: async (req, res) => {
         try {
             const { search, klasifikasi_id, unsur_id, kecamatan_id, desa_id, status } = req.query;
@@ -638,6 +638,18 @@ module.exports = {
             const features = dataGets.map(item => {
                 const fotos = item?.Fototoponims || [];
                 const fotoUrls = fotos.map(foto => foto.foto_url);
+
+                let coordinates;
+                if (item.tipe_geometri === 1) {  // Point
+                    const [latitude, longitude] = item.latlong.split(',').map(coord => parseFloat(coord.trim()));
+                    coordinates = [longitude, latitude]; 
+                } else if (item.tipe_geometri === 2 || item.tipe_geometri === 3) {  // Polygon or LineString
+                    const coordinatePairs = item.latlong.split(';').map(pair => {
+                        const [latitude, longitude] = pair.trim().split(',').map(coord => parseFloat(coord.trim()));
+                        return [longitude, latitude]; 
+                    });
+                    coordinates = coordinatePairs;
+                }
 
                 return {
                     type: "Feature",
@@ -695,16 +707,17 @@ module.exports = {
                         geom: null,
                         b_box: null,
                         geometry: JSON.stringify({
-                            type: "Point",
-                            coordinates: [item?.bujur, item?.lintang]
+                            type: item?.tipe_geometri === 1 ? "Point" : item?.tipe_geometri === 2 ? "Polygon" : item?.tipe_geometri === 3 ? "LineString" : null,
+                            coordinates: coordinates
                         })
                     },
                     geometry: {
-                        type: "Point",
-                        coordinates: [item?.bujur, item?.lintang]
+                        type: item?.tipe_geometri === 1 ? "Point" : item?.tipe_geometri === 2 ? "Polygon" : item?.tipe_geometri === 3 ? "LineString" : null,
+                        coordinates: coordinates
                     }
                 };
             });
+
 
             const geoJson = {
                 type: "FeatureCollection",
