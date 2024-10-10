@@ -277,6 +277,7 @@ module.exports = {
     },
 
     importCsv: async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
             if (!req.file) {
                 return res.status(400).json({ message: 'No file uploaded' });
@@ -357,7 +358,10 @@ module.exports = {
 
                     res.status(201).json({ message: 'Import successful!' });
                 });
+
+            await transaction.commit();
         } catch (err) {
+            await transaction.rollback();
             logger.error(`Error : ${err}`);
             logger.error(`Error message: ${err.message}`);
             console.error('Error importing data: ', err.message);
@@ -397,7 +401,7 @@ module.exports = {
             while (!result.done) {
                 i++
                 console.log("i", i)
-                
+
                 const properties = result.value.properties;
                 const geometry = result.value.geometry;
 
@@ -526,6 +530,5 @@ module.exports = {
             res.status(500).json(response(500, 'internal server error', err.message));
         }
     }
-
 
 }
