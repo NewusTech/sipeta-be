@@ -76,25 +76,25 @@ module.exports = {
                 let unsur_id = unsurCache[properties?.ftype];
                 if (!unsur_id) {
                     unsur_id = await getUnsurId(properties?.ftype);
-                    unsurCache[properties?.ftype] = unsur_id;
+                    unsurCache[properties?.ftype] = unsur_id ?? null;
                 }
 
                 let klasifikasi_id = klasifikasiCache[properties?.klstpn];
                 if (!klasifikasi_id) {
                     klasifikasi_id = await getKlasifikasiId(properties?.klstpn);
-                    klasifikasiCache[properties?.klstpn] = klasifikasi_id;
+                    klasifikasiCache[properties?.klstpn] = klasifikasi_id ?? null;
                 }
 
                 let kecamatan_id = kecamatanCache[properties?.wadmkc];
                 if (!kecamatan_id) {
                     kecamatan_id = await getKecamatanId(properties?.wadmkc);
-                    kecamatanCache[properties?.wadmkc] = kecamatan_id;
+                    kecamatanCache[properties?.wadmkc] = kecamatan_id ?? null;
                 }
 
                 let desa_id = desaCache[properties?.wadmkd];
                 if (!desa_id) {
                     desa_id = await getDesaId(properties?.wadmkd);
-                    desaCache[properties?.wadmkd] = desa_id;
+                    desaCache[properties?.wadmkd] = desa_id ?? null;
                 }
 
                 let latlong;
@@ -407,25 +407,25 @@ module.exports = {
                 let unsur_id = unsurCache[properties['FTYPE']];
                 if (!unsur_id) {
                     unsur_id = await getUnsurId(properties['FTYPE']);
-                    unsurCache[properties['FTYPE']] = unsur_id;
+                    unsurCache[properties['FTYPE']] = unsur_id ?? null;
                 }
 
                 let klasifikasi_id = klasifikasiCache[properties['KLSTPN']];
                 if (!klasifikasi_id) {
                     klasifikasi_id = await getKlasifikasiId(properties['KLSTPN']);
-                    klasifikasiCache[properties['KLSTPN']] = klasifikasi_id;
+                    klasifikasiCache[properties['KLSTPN']] = klasifikasi_id ?? null;
                 }
 
                 let kecamatan_id = kecamatanCache[properties['WADMKC']];
                 if (!kecamatan_id) {
                     kecamatan_id = await getKecamatanId(properties['WADMKC']);
-                    kecamatanCache[properties['WADMKC']] = kecamatan_id;
+                    kecamatanCache[properties['WADMKC']] = kecamatan_id ?? null;
                 }
 
                 let desa_id = desaCache[properties['WADMKD']];
                 if (!desa_id) {
                     desa_id = await getDesaId(properties['WADMKD']);
-                    desaCache[properties['WADMKD']] = desa_id;
+                    desaCache[properties['WADMKD']] = desa_id ?? null;
                 }
 
                 let latlong;
